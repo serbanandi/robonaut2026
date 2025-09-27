@@ -1,0 +1,6 @@
+#ifndef ROBONAUT_SIMPLELOGGER_SIMPLELOGGER_H_
+#define ROBONAUT_SIMPLELOGGER_SIMPLELOGGER_H_
+
+void Log(const char* tag, const char* str, ...);
+
+#endif /* ROBONAUT_SIMPLELOGGER_SIMPLELOGGER_H_ */
