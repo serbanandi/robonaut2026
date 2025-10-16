@@ -15425,6 +15425,12 @@
 		(uuid "0367d2e1-66fa-47b2-9c8e-8702a444fa3a")
 	)
 	(junction
+		(at 520.7 168.91)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "04a5a68b-13ff-45ca-b98d-6bb0482f812f")
+	)
+	(junction
 		(at 80.01 58.42)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -15477,12 +15483,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "19f1d101-46e6-420f-a1e2-6d159ae0c417")
-	)
-	(junction
-		(at 520.7 166.37)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "1b4152d3-9c48-4633-adde-ee00761bde11")
 	)
 	(junction
 		(at 483.87 83.82)
@@ -15615,12 +15615,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "5e94481b-515a-4dff-b1c2-526f5f9f3346")
-	)
-	(junction
-		(at 537.21 168.91)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "60619077-1f06-4d35-9ff6-86ed303bb324")
 	)
 	(junction
 		(at 215.9 81.28)
@@ -16332,6 +16326,16 @@
 	)
 	(wire
 		(pts
+			(xy 520.7 168.91) (xy 520.7 160.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "13f4e2c0-210e-496e-ba10-8895ae0c17b7")
+	)
+	(wire
+		(pts
 			(xy 323.85 140.97) (xy 323.85 138.43)
 		)
 		(stroke
@@ -16369,16 +16373,6 @@
 			(type default)
 		)
 		(uuid "1666aea2-b849-464c-9de6-e872949a095d")
-	)
-	(wire
-		(pts
-			(xy 519.43 168.91) (xy 529.59 168.91)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "17af49e6-3a76-4a28-8867-33cb73c86f5c")
 	)
 	(wire
 		(pts
@@ -16572,16 +16566,6 @@
 	)
 	(wire
 		(pts
-			(xy 525.78 166.37) (xy 520.7 166.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "24a164d0-e2e3-4e45-b8e3-de6d3386fa36")
-	)
-	(wire
-		(pts
 			(xy 480.06 64.77) (xy 482.6 64.77)
 		)
 		(stroke
@@ -16669,16 +16653,6 @@
 			(type default)
 		)
 		(uuid "2adad2b0-5244-4c7a-87fe-ccec187572c8")
-	)
-	(wire
-		(pts
-			(xy 525.78 170.18) (xy 525.78 166.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "2b543d85-f391-4cff-8ed0-509312f6e4b6")
 	)
 	(wire
 		(pts
@@ -17029,6 +17003,16 @@
 			(type default)
 		)
 		(uuid "461ef499-6b6b-4bb6-87fb-28c5d24478bc")
+	)
+	(wire
+		(pts
+			(xy 520.7 168.91) (xy 525.78 168.91)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "470e7358-8f3c-4fce-be8a-ea9a147cde74")
 	)
 	(wire
 		(pts
@@ -17502,6 +17486,16 @@
 	)
 	(wire
 		(pts
+			(xy 519.43 168.91) (xy 520.7 168.91)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "77548dd7-2a1f-48f6-aeb9-59e4c2f02de8")
+	)
+	(wire
+		(pts
 			(xy 483.87 81.28) (xy 483.87 83.82)
 		)
 		(stroke
@@ -17609,6 +17603,16 @@
 			(type default)
 		)
 		(uuid "7f32f96a-86e6-4a48-a3e6-411fe7d2b4a9")
+	)
+	(wire
+		(pts
+			(xy 538.48 166.37) (xy 537.21 166.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7ff7f833-1997-4004-a913-3d5d72a23101")
 	)
 	(wire
 		(pts
@@ -17769,16 +17773,6 @@
 			(type default)
 		)
 		(uuid "8e121276-3177-4a3e-88da-6972d84aef0f")
-	)
-	(wire
-		(pts
-			(xy 537.21 168.91) (xy 538.48 168.91)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "8e1cdc8a-8859-4b93-9d87-06e7399161d2")
 	)
 	(wire
 		(pts
@@ -18152,6 +18146,16 @@
 	)
 	(wire
 		(pts
+			(xy 525.78 168.91) (xy 525.78 170.18)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b0108314-bf47-4913-a683-7af63e12b910")
+	)
+	(wire
+		(pts
 			(xy 474.98 171.45) (xy 474.98 168.91)
 		)
 		(stroke
@@ -18202,13 +18206,13 @@
 	)
 	(wire
 		(pts
-			(xy 520.7 160.02) (xy 520.7 166.37)
+			(xy 519.43 166.37) (xy 529.59 166.37)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "b85a0fc6-fed9-47ac-9cb1-7c0e1aebfc3f")
+		(uuid "b7b898a3-0db0-4ece-a0f7-15863eaa546c")
 	)
 	(wire
 		(pts
@@ -18622,16 +18626,6 @@
 	)
 	(wire
 		(pts
-			(xy 520.7 166.37) (xy 519.43 166.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d5f00fd7-9bd7-46bc-94d3-b4a3fa8c88d9")
-	)
-	(wire
-		(pts
 			(xy 283.21 328.93) (xy 283.21 334.01)
 		)
 		(stroke
@@ -18792,16 +18786,6 @@
 	)
 	(wire
 		(pts
-			(xy 537.21 167.64) (xy 537.21 168.91)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "e131bb27-0d54-4ba9-a0c3-cd9d1a793a4a")
-	)
-	(wire
-		(pts
 			(xy 417.83 124.46) (xy 424.18 124.46)
 		)
 		(stroke
@@ -18952,7 +18936,7 @@
 	)
 	(wire
 		(pts
-			(xy 538.48 170.18) (xy 538.48 168.91)
+			(xy 538.48 166.37) (xy 538.48 170.18)
 		)
 		(stroke
 			(width 0)
@@ -19581,7 +19565,7 @@
 		(uuid "49f23556-6996-429a-be10-9356f175be04")
 	)
 	(label "LED_DATA"
-		(at 537.21 167.64 0)
+		(at 538.48 167.64 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -20799,7 +20783,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "SolderJumper_2_Open"
+		(property "Value" "5V_1"
 			(at 58.42 49.5299 90)
 			(effects
 				(font
@@ -20868,7 +20852,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x01_Pin"
+		(property "Value" "GND_TP1"
 			(at 470.535 151.13 0)
 			(effects
 				(font
@@ -21328,7 +21312,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "IR_2"
 			(at 410.21 120.65 0)
 			(effects
 				(font
@@ -21461,7 +21445,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "LED_DATA"
 			(at 514.35 162.56 0)
 			(effects
 				(font
@@ -21723,7 +21707,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "SPI"
 			(at 546.1 120.65 0)
 			(effects
 				(font
@@ -21794,7 +21778,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x04"
+		(property "Value" "PINS"
 			(at 485.14 161.29 0)
 			(effects
 				(font
@@ -21934,7 +21918,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x01_Pin"
+		(property "Value" "GND_TP4"
 			(at 470.535 162.56 0)
 			(effects
 				(font
@@ -22185,7 +22169,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x01_Pin"
+		(property "Value" "GND_TP2"
 			(at 470.535 154.94 0)
 			(effects
 				(font
@@ -22317,7 +22301,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x01_Pin"
+		(property "Value" "3V3_TP4"
 			(at 470.535 144.78 0)
 			(effects
 				(font
@@ -22507,7 +22491,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "IR_1"
 			(at 373.38 120.65 0)
 			(effects
 				(font
@@ -22578,7 +22562,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "UART"
 			(at 518.16 119.38 0)
 			(effects
 				(font
@@ -22978,7 +22962,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x20"
+		(property "Value" "LINE_FRONT"
 			(at 273.05 33.02 0)
 			(effects
 				(font
@@ -23168,7 +23152,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "IR_3"
 			(at 373.38 154.94 0)
 			(effects
 				(font
@@ -23301,7 +23285,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "RX_PWM"
 			(at 271.272 123.698 90)
 			(effects
 				(font
@@ -23950,7 +23934,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "SERVO_FRONT"
 			(at 379.73 46.9899 90)
 			(effects
 				(font
@@ -24283,7 +24267,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "DCDC"
+		(property "Value" "8V_DCDC_1"
 			(at 90.17 41.9099 0)
 			(effects
 				(font
@@ -24355,7 +24339,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "SolderJumper_2_Open"
+		(property "Value" "5V_2"
 			(at 63.5 45.7199 90)
 			(effects
 				(font
@@ -24939,7 +24923,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "IR_4"
 			(at 408.94 154.94 0)
 			(effects
 				(font
@@ -25135,7 +25119,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "DCDC"
+		(property "Value" "5V_DCDC_1"
 			(at 90.17 62.2299 0)
 			(effects
 				(font
@@ -25790,7 +25774,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x01_Pin"
+		(property "Value" "3V3_TP3"
 			(at 470.535 137.16 0)
 			(effects
 				(font
@@ -26632,7 +26616,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x04"
+		(property "Value" "ENC_AB"
 			(at 474.98 80.01 0)
 			(effects
 				(font
@@ -26905,7 +26889,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "DCDC"
+		(property "Value" "5V_DCDC_2"
 			(at 90.17 73.6599 0)
 			(effects
 				(font
@@ -26978,7 +26962,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "SERVO_BACK"
 			(at 421.64 46.9899 90)
 			(effects
 				(font
@@ -27050,7 +27034,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "SolderJumper_2_Open"
+		(property "Value" "3V3"
 			(at 147.32 66.0401 90)
 			(effects
 				(font
@@ -27253,7 +27237,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x01_Pin"
+		(property "Value" "5V_TP2"
 			(at 470.535 127 0)
 			(effects
 				(font
@@ -27319,7 +27303,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x20"
+		(property "Value" "LINE_BACK"
 			(at 327.66 33.02 0)
 			(effects
 				(font
@@ -27441,7 +27425,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x09"
+		(property "Value" "UI_MODULE"
 			(at 180.34 133.35 0)
 			(effects
 				(font
@@ -27659,7 +27643,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x10"
+		(property "Value" "IMU"
 			(at 85.09 125.73 0)
 			(effects
 				(font
@@ -28012,7 +27996,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x01_Pin"
+		(property "Value" "5V_TP1"
 			(at 470.535 119.38 0)
 			(effects
 				(font
@@ -28844,7 +28828,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x04"
+		(property "Value" "TEL_UART"
 			(at 296.672 156.972 90)
 			(effects
 				(font
@@ -29440,7 +29424,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "DCDC"
+		(property "Value" "8V_DCDC_2"
 			(at 90.17 52.0699 0)
 			(effects
 				(font
@@ -29579,7 +29563,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "I2C4"
 			(at 546.1 147.32 0)
 			(effects
 				(font
@@ -30163,7 +30147,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x01_Pin"
+		(property "Value" "GND"
 			(at 470.535 166.37 0)
 			(effects
 				(font
@@ -30337,7 +30321,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 533.4 168.91 90)
+		(at 533.4 166.37 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -30345,7 +30329,7 @@
 		(dnp no)
 		(uuid "e90cba26-15db-4585-bb04-8a24b8ea621b")
 		(property "Reference" "R5"
-			(at 533.4 164.846 90)
+			(at 533.4 162.306 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30353,7 +30337,7 @@
 			)
 		)
 		(property "Value" "1.2k"
-			(at 533.4 166.624 90)
+			(at 533.4 164.084 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30361,7 +30345,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
-			(at 533.4 170.688 90)
+			(at 533.4 168.148 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30370,7 +30354,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 533.4 168.91 0)
+			(at 533.4 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30379,7 +30363,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 533.4 168.91 0)
+			(at 533.4 166.37 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -30420,7 +30404,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x18"
+		(property "Value" "CAMERA"
 			(at 182.88 39.37 0)
 			(effects
 				(font
@@ -30858,7 +30842,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x01_Pin"
+		(property "Value" "GND_TP3"
 			(at 470.535 158.75 0)
 			(effects
 				(font
@@ -30986,7 +30970,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "Conn_01x03"
+		(property "Value" "CMD_RX"
 			(at 319.532 126.238 90)
 			(effects
 				(font
@@ -31633,7 +31617,7 @@
 				)
 			)
 		)
-		(property "Value" "Conn_01x08"
+		(property "Value" "MOTOR_DRIVER"
 			(at 474.98 43.18 0)
 			(effects
 				(font
