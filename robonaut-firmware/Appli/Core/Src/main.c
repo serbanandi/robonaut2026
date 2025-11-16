@@ -24,6 +24,7 @@
 #include "ramcfg.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -42,7 +43,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LED_PERIOD_MS	(500)
+#define LED_PERIOD_MS	(100)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -106,6 +107,18 @@ int main(void)
   MX_SPI5_Init();
   MX_TIM6_Init();
   MX_CACHEAXI_Init();
+  MX_SPI2_Init();
+  MX_TIM3_Init();
+  MX_TIM13_Init();
+  MX_TIM15_Init();
+  MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
+  MX_TIM4_Init();
+  MX_I2C1_Init();
+  MX_SPI1_Init();
+  MX_TIM1_Init();
+  MX_TIM14_Init();
+  MX_UART8_Init();
   /* USER CODE BEGIN 2 */
   NPUCache_config();
   NN_Init();
