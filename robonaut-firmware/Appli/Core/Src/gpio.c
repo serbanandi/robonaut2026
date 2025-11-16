@@ -33,14 +33,8 @@
 /* USER CODE END 1 */
 
 /** Configure pins
-     PB0   ------> DEBUG_TRACED1
-     PB7   ------> DEBUG_TRACED3
-     PB6   ------> DEBUG_TRACED2
-     PB3   ------> DEBUG_TRACECLK
-     PE3   ------> DEBUG_TRACED0
      PF3   ------> ADC1_INP16
      PA1   ------> ADC2_INP1
-     PA15(JTDI)   ------> DEBUG_JTDI
      PG15   ------> ADC1_INP7
      PA10   ------> ADC1_INP11
      PA14(JTCK/SWCLK)   ------> DEBUG_JTCK-SWCLK
@@ -48,7 +42,6 @@
      PA13(JTMS/SWDIO)   ------> DEBUG_JTMS-SWDIO
      PA12   ------> ADC2_INP13
      PA8   ------> ADC1_INP5
-     PB5(JTDO/TRACESWO)   ------> DEBUG_JTDO-SWO
 */
 void MX_GPIO_Init(void)
 {
@@ -61,10 +54,10 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOP_CLK_ENABLE();
   __HAL_RCC_GPIOO_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
-  __HAL_RCC_GPIOP_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -75,6 +68,9 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOH, OV_FLASH_Pin|OV_RST_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(MOT_EN_GPIO_Port, MOT_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOO, _LINE_LED_OE_Pin|LINE_INF_LE_Pin|_LINE_INF_OE_Pin|LINE_LED_LE_Pin, GPIO_PIN_RESET);
@@ -111,6 +107,21 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : GEN_PIN1_Pin UI_CONF_Pin UI_B_Pin MOT_STATUS_Pin
+                           UI_PUSH_Pin UI_A_Pin UI_BACK_Pin GEN_PIN2_Pin */
+  GPIO_InitStruct.Pin = GEN_PIN1_Pin|UI_CONF_Pin|UI_B_Pin|MOT_STATUS_Pin
+                          |UI_PUSH_Pin|UI_A_Pin|UI_BACK_Pin|GEN_PIN2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOP, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : MOT_EN_Pin */
+  GPIO_InitStruct.Pin = MOT_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(MOT_EN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : _LINE_LED_OE_Pin LINE_INF_LE_Pin _LINE_INF_OE_Pin LINE_LED_LE_Pin */
   GPIO_InitStruct.Pin = _LINE_LED_OE_Pin|LINE_INF_LE_Pin|_LINE_INF_OE_Pin|LINE_LED_LE_Pin;

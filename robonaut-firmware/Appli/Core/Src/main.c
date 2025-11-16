@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cacheaxi.h"
 #include "dcmipp.h"
+#include "gpdma.h"
 #include "i2c.h"
 #include "ramcfg.h"
 #include "spi.h"
@@ -29,11 +30,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "npu_cache.h"
-#include "NeuralNetwork/NeuralNetwork.h"
-#include "LineSensor/LineSensor.h"
-#include "MicroTimer/MicroTimer.h"
+
+#include "System/sys_interface.h"
 #include "SimpleLogger/SimpleLogger.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,7 +43,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LED_PERIOD_MS	(100)
+#define LED_PERIOD_MS	(500)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -56,12 +56,13 @@
 COM_InitTypeDef BspCOMInit;
 
 /* USER CODE BEGIN PV */
-uint32_t last_led_tick = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
+static void SystemIsolation_Config(void);
 /* USER CODE BEGIN PFP */
-static void NPUCache_config(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -100,6 +101,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_GPDMA1_Init();
   MX_DCMIPP_Init();
   MX_RAMCFG_Init();
   MX_I2C4_Init();
@@ -117,11 +119,12 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
-  MX_TIM14_Init();
   MX_UART8_Init();
+  MX_TIM17_Init();
+  MX_TIM14_Init();
+  SystemIsolation_Config();
   /* USER CODE BEGIN 2 */
-  NPUCache_config();
-  NN_Init();
+
   /* USER CODE END 2 */
 
   /* Initialize leds */
@@ -145,24 +148,15 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  BspCOMInit.BaudRate = 921600;
-  if (BSP_COM_Init(COM1, &BspCOMInit) != BSP_ERROR_NONE)
-	  Error_Handler();
-  if (!MT_Init(&htim6))
-	  Error_Handler();
-  if (!LS_Init(&hspi4, NULL))
-	  Error_Handler();
+  
+  sys_Init();
+  sys_Run();
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	LS_Process();
-	if ((HAL_GetTick() - last_led_tick) >= LED_PERIOD_MS)
-	{
-		BSP_LED_Toggle(LED_GREEN);
-		last_led_tick = HAL_GetTick();
-	}
   }
   /* USER CODE END 3 */
 }
@@ -185,12 +179,41 @@ void PeriphCommonClock_Config(void)
   }
 }
 
+/**
+  * @brief RIF Initialization Function
+  * @param None
+  * @retval None
+  */
+  static void SystemIsolation_Config(void)
+{
+
+/* USER CODE BEGIN RIF_Init 0 */
+
+/* USER CODE END RIF_Init 0 */
+
+  /* set all required IPs as secure privileged */
+  __HAL_RCC_RIFSC_CLK_ENABLE();
+
+  /* RIF-Aware IPs Config */
+
+  /* set up GPDMA configuration */
+  /* set GPDMA1 channel 0 used by I2C1 */
+  if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel0,DMA_CHANNEL_SEC|DMA_CHANNEL_PRIV|DMA_CHANNEL_SRC_SEC|DMA_CHANNEL_DEST_SEC)!= HAL_OK )
+  {
+    Error_Handler();
+  }
+
+/* USER CODE BEGIN RIF_Init 1 */
+
+/* USER CODE END RIF_Init 1 */
+/* USER CODE BEGIN RIF_Init 2 */
+
+/* USER CODE END RIF_Init 2 */
+
+}
+
 /* USER CODE BEGIN 4 */
 
-static void NPUCache_config(void)
-{
-  npu_cache_enable();
-}
 /* USER CODE END 4 */
 
 /**

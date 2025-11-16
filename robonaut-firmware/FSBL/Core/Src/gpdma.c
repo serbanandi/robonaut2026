@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    i2c.h
-  * @brief   This file contains all the function prototypes for
-  *          the i2c.c file
+  * @file    gpdma.c
+  * @brief   This file provides code for the configuration
+  *          of the GPDMA instances.
   ******************************************************************************
   * @attention
   *
@@ -17,41 +17,33 @@
   ******************************************************************************
   */
 /* USER CODE END Header */
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __I2C_H__
-#define __I2C_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "gpdma.h"
 
-/* USER CODE BEGIN Includes */
+/* USER CODE BEGIN 0 */
 
-extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
+/* USER CODE END 0 */
 
-/* USER CODE END Includes */
+/* GPDMA1 init function */
+void MX_GPDMA1_Init(void)
+{
 
-extern I2C_HandleTypeDef hi2c1;
+  /* USER CODE BEGIN GPDMA1_Init 0 */
 
-extern I2C_HandleTypeDef hi2c4;
+  /* USER CODE END GPDMA1_Init 0 */
 
-/* USER CODE BEGIN Private defines */
+  /* Peripheral clock enable */
+  __HAL_RCC_GPDMA1_CLK_ENABLE();
 
-/* USER CODE END Private defines */
+  /* USER CODE BEGIN GPDMA1_Init 1 */
 
-void MX_I2C1_Init(void);
-void MX_I2C4_Init(void);
+  /* USER CODE END GPDMA1_Init 1 */
+  /* USER CODE BEGIN GPDMA1_Init 2 */
 
-/* USER CODE BEGIN Prototypes */
+  /* USER CODE END GPDMA1_Init 2 */
 
-/* USER CODE END Prototypes */
-
-#ifdef __cplusplus
 }
-#endif
 
-#endif /* __I2C_H__ */
+/* USER CODE BEGIN 1 */
 
+/* USER CODE END 1 */
