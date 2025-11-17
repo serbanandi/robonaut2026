@@ -33,22 +33,13 @@
 /* USER CODE END 1 */
 
 /** Configure pins
-     PB0   ------> DEBUG_TRACED1
-     PB7   ------> DEBUG_TRACED3
-     PB6   ------> DEBUG_TRACED2
-     PB3   ------> DEBUG_TRACECLK
-     PE3   ------> DEBUG_TRACED0
-     PA15(JTDI)   ------> DEBUG_JTDI
      PA14(JTCK/SWCLK)   ------> DEBUG_JTCK-SWCLK
      PA13(JTMS/SWDIO)   ------> DEBUG_JTMS-SWDIO
-     PB5(JTDO/TRACESWO)   ------> DEBUG_JTDO-SWO
 */
 void MX_GPIO_Init(void)
 {
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPION_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 

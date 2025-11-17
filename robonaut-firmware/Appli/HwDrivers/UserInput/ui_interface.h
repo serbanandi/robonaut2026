@@ -1,10 +1,10 @@
 #ifndef UI_INTERFACE_H
 #define UI_INTERFACE_H
 
+#include <stdint.h>
 #include <stdbool.h>
 
 typedef struct {
-    int encoderPos;
     bool enterButtonWasPressed;
     bool backButtonWasPressed;
     bool knobButtonWasPressed;
@@ -14,6 +14,8 @@ void ui_Init(void);
 
 void ui_Process();
 
-void ui_GetState(ui_StateType* state);
+void ui_GetButtonState(ui_StateType* state);
+
+int32_t ui_GetEncoderPosition();
 
 #endif // UI_INTERFACE_H

@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 static ui_StateType currentState = {0};
+static int32_t encoderPosition = 0;
 
 static bool enterButtonIsPressed = false;
 static bool backButtonIsPressed = false;
@@ -27,16 +28,15 @@ void ui_Process()
     {
         if (currentB == 0) 
         {
-            currentState.encoderPos++;
+            encoderPosition++;
         } 
         else 
         {
-            currentState.encoderPos--;
+            encoderPosition--;
         }
     }
 
     lastA = currentA;
-    lastB = currentB;
 
     bool enterPressed = HAL_GPIO_ReadPin(UI_CONF_GPIO_Port, UI_CONF_Pin) == GPIO_PIN_RESET;
     bool backPressed = HAL_GPIO_ReadPin(UI_BACK_GPIO_Port, UI_BACK_Pin) == GPIO_PIN_RESET;
@@ -77,7 +77,7 @@ void ui_Process()
     }
 }
 
-void ui_GetState(ui_StateType* state) 
+void ui_GetButtonState(ui_StateType* state) 
 {
     if (state != NULL) 
     {
@@ -86,4 +86,9 @@ void ui_GetState(ui_StateType* state)
     currentState.enterButtonWasPressed = false;
     currentState.backButtonWasPressed = false;
     currentState.knobButtonWasPressed = false;
+}
+
+int32_t ui_GetEncoderPosition() 
+{
+    return encoderPosition;
 }

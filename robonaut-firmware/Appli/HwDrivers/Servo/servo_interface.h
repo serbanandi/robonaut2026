@@ -1,8 +1,6 @@
 #ifndef SERVO_INTERFACE_H
 #define SERVO_INTERFACE_H
 
-#include <stdint.h>
-
 typedef enum {
     SERVO_FRONT = 0,
     SERVO_BACK,
@@ -10,6 +8,6 @@ typedef enum {
 
 void servo_Init(void);
 
-void servo_SetAngle(servo_SelectType servo, int16_t pos);
+void servo_SetAngle(servo_SelectType servo, float pos);
 
 #endif // SERVO_INTERFACE_H
