@@ -2,6 +2,8 @@
 #include "main.h"
 #include <stdint.h>
 
+#define MOT_MAX_PWR       0.3f
+
 static uint32_t motorTimerPeriod = 0;
 static uint32_t minPulseWidth = 0;
 static uint32_t maxPulseWidth = 0;
@@ -42,12 +44,12 @@ void mot_Enable(bool enable)
 
 /**
  * @brief Set the motor speed.
- * @param speed The speed to set, in the range [-1.0, 1.0].
+ * @param speed The speed to set, in the range [-MOT_MAX_PWR, MOT_MAX_PWR].
  */
 void mot_SetSpeed(float speed) 
 {
-    if (speed < -1.0f) speed = -1.0f;
-    if (speed >  1.0f) speed =  1.0f;
+    if (speed < -MOT_MAX_PWR) speed = -MOT_MAX_PWR;
+    if (speed >  MOT_MAX_PWR) speed =  MOT_MAX_PWR;
 
     uint32_t pulseWidth1 = middlePulseWidth + (int32_t)(speed * minMaxPulseWidthDiff);
     uint32_t pulseWidth2 = motorTimerPeriod - pulseWidth1;

@@ -5,8 +5,8 @@
 static line_InternalStateType currentState;
 static line_ParamSettingsType currentParams = 
 {
-    .adcThreshold = 400,
-    .useSingleLineDetection = false
+    .adcThreshold = 1600,
+    .useSingleLineDetection = true,
 };
 
 static unsigned int lastTripleLineTimeMs = 0;
@@ -25,7 +25,7 @@ void line_Init()
 void line_SetParams(const line_ParamSettingsType* params) 
 {
     currentParams = *params;
-    line_ResetInternalState();
+    //line_ResetInternalState();
 }
 
 
@@ -149,9 +149,7 @@ static float _line_DetectMainLine(uint16_t adcValues[32], line_DetectionChunkTyp
     }
     int start = fmax(lineChunks[selectedChunk].startPos - 2, 0);
     int length = lineChunks[selectedChunk].endPos + 2 - lineChunks[selectedChunk].startPos;
-    lastDetectedLinePos = _line_RunLineDetectionOnPartialData(start, length, adcValues);
-
-    return 0.0f;
+    return _line_RunLineDetectionOnPartialData(start, length, adcValues);
 }
 
 

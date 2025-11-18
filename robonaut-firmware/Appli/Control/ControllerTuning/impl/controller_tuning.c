@@ -1,25 +1,19 @@
 #include "../tuning_interface.h"
 #include "controller_tuning.h"
 
-#include "LineSensor/LineSensor.h"
-#include "MicroTimer/MicroTimer.h"
 #include "SimpleLogger/SimpleLogger.h"
 
 #include "SSD1306/ssd1306_interface.h"
 #include "SSD1306/ssd1306_fonts.h"
 #include "UserInput/ui_interface.h"
-#include "Servo/servo_interface.h"
-#include "MotorControl/mot_interface.h"
-#include "Control/Control.h"
-
-static float sample_time = 10.0f; // [ms]
 
 static float tuning_parameters[6];
 static tuning_ParameterType param;
 static tuning_StateType state;
+static tuning_ParametersType* applied_params;
 
 
-static void tuning_PrintUI(void) {
+static void _tuning_PrintUI(void) {
     char buffer[64];
     ssd1306_Fill(0);
 
@@ -96,7 +90,7 @@ static void tuning_PrintUI(void) {
     ssd1306_UpdateScreen();
 }
 
-static void tuning_AdjustParameter(tuning_ParameterType parameter, int32_t adjustment) {
+static void _tuning_AdjustParameter(tuning_ParameterType parameter, int32_t adjustment) {
     float adjustmentFactor = 0.0f;
 
     switch (parameter) {
@@ -131,20 +125,32 @@ static void tuning_AdjustParameter(tuning_ParameterType parameter, int32_t adjus
     if (tuning_parameters[MODE] > 1.0f) tuning_parameters[MODE] = 1.0f;
 }
 
-void tuning_Init(void){
+static void _tuning_ApplyParameters(void) {
+    applied_params->threshold = (uint16_t)tuning_parameters[THRESHOLD];
+    applied_params->p_coeff = tuning_parameters[P_COEFF];
+    applied_params->i_coeff = tuning_parameters[I_COEFF];
+    applied_params->d_coeff = tuning_parameters[D_COEFF];
+    applied_params->speed = tuning_parameters[SPEED];
+    applied_params->mode = (tuning_parameters[MODE] >= 0.5f) ? true : false;
+}
+
+void tuning_Init(const tuning_ParametersType* params){
     // Initialize controller tuning here
-    tuning_parameters[THRESHOLD] = 400.0f;
+    applied_params = params;
+
+    tuning_parameters[THRESHOLD] = 1600.0f;
     tuning_parameters[P_COEFF] = 1.0f;
     tuning_parameters[I_COEFF] = 0.0f;
     tuning_parameters[D_COEFF] = 0.0f;
     tuning_parameters[SPEED] = 0.0f;
     tuning_parameters[MODE] = 0.;
 
+    _tuning_ApplyParameters();
+
     param = THRESHOLD;
     state = IDLE;
 }
 
-/* Should be called every *sample_time* ms */
 void tuning_Process(void){
     static int32_t lastEncoderPos = 0;
     static int32_t currentEncoderPos = 0;
@@ -156,61 +162,33 @@ void tuning_Process(void){
     lastEncoderPos = currentEncoderPos;
     currentEncoderPos = ui_GetEncoderPosition();
 
-    tuning_PrintUI();
+    _tuning_PrintUI();
 
     // Process controller tuning here
     switch (state) {
         case IDLE:          // Stop motor
-            mot_Enable(false);
+            applied_params->motor_enabled = false;
 
             state = SELECT_PARAM;
             break;
         case SELECT_PARAM:  // Handle parameter selection
-            if (ui_state.knobButtonWasPressed) {
-                state = ADJUST_PARAM;
-            }
-            else if (ui_state.enterButtonWasPressed) {
-                state = APPLY_PARAM;
-                CTRL_InitLoop();
-            }
+            if (ui_state.knobButtonWasPressed) {state = ADJUST_PARAM;}
+            else if (ui_state.enterButtonWasPressed) {state = APPLY_PARAM;}
             else if (currentEncoderPos != lastEncoderPos) {
                 param = (tuning_ParameterType)(param + (currentEncoderPos - lastEncoderPos)) % 6;
             }
             break;
         case ADJUST_PARAM:  // Handle parameter adjustment
-            if (ui_state.knobButtonWasPressed) {
-                state = SELECT_PARAM;
-            }
-            else if (ui_state.enterButtonWasPressed) {
-                state = APPLY_PARAM;
-                CTRL_InitLoop();
-            }
-            else if (currentEncoderPos != lastEncoderPos) {
-                tuning_AdjustParameter(param, currentEncoderPos - lastEncoderPos);
-            }
-            else if (ui_state.backButtonWasPressed) {
-                state = SELECT_PARAM;
-            }
+            if (ui_state.knobButtonWasPressed) {state = SELECT_PARAM;}
+            else if (ui_state.enterButtonWasPressed) {state = APPLY_PARAM;}
+            else if (currentEncoderPos != lastEncoderPos) { _tuning_AdjustParameter(param, currentEncoderPos - lastEncoderPos);}
+            else if (ui_state.backButtonWasPressed) {state = SELECT_PARAM;}
             break;
         case APPLY_PARAM:   // Apply the adjusted parameter
-            if (ui_state.backButtonWasPressed) {
-                state = IDLE;
-                mot_Enable(false);
-                servo_SetAngle(SERVO_FRONT, 0.0f);
-                break;
-            }
-        
-            servo_setpoint = CTRL_RunLoop(
-                tuning_parameters[P_COEFF],
-                tuning_parameters[I_COEFF],
-                tuning_parameters[D_COEFF],
-                sample_time 
-            );
+            if (ui_state.backButtonWasPressed) {state = IDLE; applied_params->motor_enabled = false; break;}
             
-            servo_SetAngle(SERVO_FRONT, servo_setpoint);
-            mot_SetSpeed(tuning_parameters[SPEED]);
-            mot_Enable(true);
-
+            _tuning_ApplyParameters();
+            applied_params->motor_enabled = true;
             break;
         default:
             break;

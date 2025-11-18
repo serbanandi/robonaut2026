@@ -14,7 +14,13 @@
 #include "MotorControl/mot_interface.h"
 #include "HwTest/test_interface.h"
 #include "Control/Control.h"
+#include "LineProcessor/line_interface.h"
+#include "ControllerTuning/tuning_interface.h"
 
+
+static tuning_ParametersType tuning_params;
+static line_ParamSettingsType line_params;
+static line_DetectionResultType line_detection_result;
 
 static void NPUCache_config(void);
 
@@ -37,6 +43,8 @@ void sys_Init(void)
     servo_Init();
     mot_Init();
     CTRL_InitLoop();
+    line_Init();
+    tuning_Init(&tuning_params);
 
     test_Init();
 
@@ -52,9 +60,33 @@ void sys_Init(void)
 
 void sys_Run(void)
 {
+    float control_signal;
     while (1)
     {
-        test_ProcessAll();
+        line_Process();
+        line_GetDetectionResult(&line_detection_result);
+        tuning_Process();
+        if (HAL_GetTick() % 10 == 0) {
+            if(tuning_params.motor_enabled) {
+                line_params.adcThreshold = tuning_params.threshold;
+                line_params.useSingleLineDetection = tuning_params.mode;
+                line_SetParams(&line_params);
+
+                control_signal = CTRL_RunLoop_TUNING(line_GetLastDetectedLinePos(), 
+                                                     tuning_params.p_coeff, 
+                                                     tuning_params.i_coeff, 
+                                                     tuning_params.d_coeff, 
+                                                     0.01f);
+                servo_SetAngle(SERVO_FRONT, control_signal);
+                
+                mot_SetSpeed(tuning_params.speed);
+                mot_Enable(true);
+            } else {
+                mot_Enable(false);
+                servo_SetAngle(SERVO_FRONT, 0.0f);
+                CTRL_InitLoop();
+            }
+        }
     }
 }
 
