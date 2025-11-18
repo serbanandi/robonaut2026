@@ -12,6 +12,7 @@
 #include "UserInput/ui_interface.h"
 #include "Servo/servo_interface.h"
 #include "HwTest/test_interface.h"
+#include "Control/Control.h"
 
 
 static void NPUCache_config(void);

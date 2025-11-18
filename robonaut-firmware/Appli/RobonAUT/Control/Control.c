@@ -3,6 +3,10 @@
 #include "Control.h"
 #include "LineSensor/LineSensor.h"
 
+
+#define ONE_LS
+//#define TWO_LS
+
 #define P_0 0.5
 
 static float error, last_error, int_error;
@@ -22,15 +26,16 @@ static float CTRL_CalculateDP(float p){
 }
 
 static float CTRL_CalculateError(LS_ADC_Values_Type adc){
+	float e;
 #ifdef ONE_LS
-	int16_t p, dp, e;
+	float p, dp;
 
 	p = CTRL_CalculatePosition(adc.front_adc);
 	dp = CTRL_CalculateDP(p);
 
 	e = dp;
 #elif defined TWO_LS
-	int16_t p_f, p_r, dp_f, dp_r, error;
+	float p_f, p_r, dp_f, dp_r;
 
 	p_f = CTRL_CalculatePosition(adc.front_adc);
 	dp_f = CTRL_CalculateDP(p_f);
