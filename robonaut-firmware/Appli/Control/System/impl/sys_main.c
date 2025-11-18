@@ -33,6 +33,7 @@ void sys_Init(void)
     ssd1306_Init();
     ui_Init();
     servo_Init();
+    CTRL_InitLoop();
 
     test_Init();
 
