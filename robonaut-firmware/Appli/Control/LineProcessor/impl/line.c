@@ -134,7 +134,7 @@ static float _line_DetectMainLine(uint16_t adcValues[32], line_DetectionChunkTyp
     }
 
     int selectedChunk = 0;
-    if (lineChunkNum == 2)
+    if (lineChunkNum == 2)      // TODO: remove this useless overcomplicated piece of shit
     {
         float c1Mid = (lineChunks[0].startPos + lineChunks[0].endPos - 31) * 0.5f;
         float c2Mid = (lineChunks[1].startPos + lineChunks[1].endPos - 31) * 0.5f;
@@ -148,10 +148,8 @@ static float _line_DetectMainLine(uint16_t adcValues[32], line_DetectionChunkTyp
         selectedChunk = 1;
     }
     int start = fmax(lineChunks[selectedChunk].startPos - 2, 0);
-    int length = lineChunks[selectedChunk].endPos + 2 - lineChunks[selectedChunk].startPos;
-    lastDetectedLinePos = _line_RunLineDetectionOnPartialData(start, length, adcValues);
-
-    return 0.0f;
+    int length = fmax(lineChunks[selectedChunk].endPos + 2, 31) - lineChunks[selectedChunk].startPos;
+    return _line_RunLineDetectionOnPartialData(start, length, adcValues);
 }
 
 
