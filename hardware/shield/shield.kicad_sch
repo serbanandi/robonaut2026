@@ -15230,6 +15230,17 @@
 		)
 		(uuid "46a44500-6e66-46e8-a414-d0de1d7bab23")
 	)
+	(text "!!!"
+		(exclude_from_sim no)
+		(at 295.656 274.574 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+				(color 255 0 1 1)
+			)
+		)
+		(uuid "4d91dab5-5ba4-41ba-b7ca-e43e39809eb3")
+	)
 	(text "Polyfuse"
 		(exclude_from_sim no)
 		(at 34.798 30.734 0)
@@ -15382,17 +15393,6 @@
 			)
 		)
 		(uuid "b7cfc132-1560-4664-83c1-b25a73db32a6")
-	)
-	(text "!!!"
-		(exclude_from_sim no)
-		(at 295.91 274.574 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-				(color 255 0 1 1)
-			)
-		)
-		(uuid "d5d81839-a1df-4e47-8cfd-f6a4f17a699f")
 	)
 	(text "Using DCDC converter modules like these:\nhttps://www.aliexpress.com/item/1005001821783419.html"
 		(exclude_from_sim no)
@@ -19418,6 +19418,16 @@
 		)
 		(uuid "224de6b6-3943-400a-a837-92e95d6914b8")
 	)
+	(label "MOT_PWM2"
+		(at 307.34 275.59 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "24014113-0e01-498b-b29c-1794918443e0")
+	)
 	(label "IMU_MISO"
 		(at 220.98 252.73 180)
 		(effects
@@ -20497,16 +20507,6 @@
 			(justify left bottom)
 		)
 		(uuid "efdca908-acc8-4b9b-bdc3-de180443f4af")
-	)
-	(label "MOT_PWM2"
-		(at 307.34 275.59 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "f07f8803-e997-4f9b-8b3e-27325806bb53")
 	)
 	(label "CMD_RX"
 		(at 326.39 144.78 0)

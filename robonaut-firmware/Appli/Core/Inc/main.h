@@ -84,6 +84,8 @@ void Error_Handler(void);
 #define IMU_MISO_GPIO_Port GPIOC
 #define PWR_EN_Pin GPIO_PIN_10
 #define PWR_EN_GPIO_Port GPIOD
+#define MOT_PWM2_Pin GPIO_PIN_9
+#define MOT_PWM2_GPIO_Port GPIOE
 #define SERVO_FRONT_Pin GPIO_PIN_12
 #define SERVO_FRONT_GPIO_Port GPIOC
 #define OV_VSYNC_Pin GPIO_PIN_2
@@ -122,8 +124,6 @@ void Error_Handler(void);
 #define TRACECLK_GPIO_Port GPIOB
 #define TRACED0_Pin GPIO_PIN_3
 #define TRACED0_GPIO_Port GPIOE
-#define MOT_PWM2_Pin GPIO_PIN_2
-#define MOT_PWM2_GPIO_Port GPIOE
 #define CMD_RX_Pin GPIO_PIN_0
 #define CMD_RX_GPIO_Port GPIOE
 #define GEN_PIN1_Pin GPIO_PIN_7

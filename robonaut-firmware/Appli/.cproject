@@ -107,7 +107,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="HwDrivers/MotorControl|RobonAUT/Drivers/MotorControl|STM32N6xx_Nucleo|STM32N6xx_HAL_Driver|Src" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
+						<entry excluding="RobonAUT/Drivers/MotorControl|STM32N6xx_Nucleo|STM32N6xx_HAL_Driver|Src" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="STM32N6xx_HAL_Driver"/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="STM32N6xx_Nucleo"/>
 					</sourceEntries>

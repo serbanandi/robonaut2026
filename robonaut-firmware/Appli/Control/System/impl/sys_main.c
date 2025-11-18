@@ -11,6 +11,7 @@
 #include "SSD1306/ssd1306_fonts.h"
 #include "UserInput/ui_interface.h"
 #include "Servo/servo_interface.h"
+#include "MotorControl/mot_interface.h"
 #include "HwTest/test_interface.h"
 
 
@@ -33,6 +34,7 @@ void sys_Init(void)
     ssd1306_Init();
     ui_Init();
     servo_Init();
+    mot_Init();
 
     test_Init();
 
