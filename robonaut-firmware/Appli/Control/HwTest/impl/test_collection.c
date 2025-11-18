@@ -22,7 +22,7 @@ void test_Init(void)
 
 void test_ProcessLineSensors(void)
 {
-    const uint16_t led_adc_threshold = 400;
+    const uint16_t led_adc_threshold = 1600;
     LS_ADC_Values_Type adc_values;
     LS_LED_Values_Type led_values;
 
