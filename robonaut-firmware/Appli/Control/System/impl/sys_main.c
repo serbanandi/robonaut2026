@@ -13,6 +13,7 @@
 #include "Servo/servo_interface.h"
 #include "MotorControl/mot_interface.h"
 #include "HwTest/test_interface.h"
+#include "Control/Control.h"
 
 
 static void NPUCache_config(void);
@@ -35,6 +36,7 @@ void sys_Init(void)
     ui_Init();
     servo_Init();
     mot_Init();
+    CTRL_InitLoop();
 
     test_Init();
 
