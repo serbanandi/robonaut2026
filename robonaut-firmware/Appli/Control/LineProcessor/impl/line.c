@@ -1,5 +1,7 @@
 #include "line.h"
 #include "LineSensor/LineSensor.h"
+#include <stdio.h>
+#include <stdarg.h>
 
 
 static line_InternalStateType currentState;
@@ -9,9 +11,7 @@ static line_ParamSettingsType currentParams =
     .useSingleLineDetection = true,
 };
 
-static unsigned int lastTripleLineTimeMs = 0;
 static unsigned int tripleLineDetectionTimeMs = 0;
-static bool lastLineTypeWasSingle = true;
 static unsigned int lastLineDetectionTime = 0;
 static float lastDetectedLinePos = 0.0f;
 
@@ -32,9 +32,7 @@ void line_SetParams(const line_ParamSettingsType* params)
 void line_ResetInternalState() 
 {
     currentState = LINE_STATE_NO_LINE;
-    lastTripleLineTimeMs = 0;
     lastLineDetectionTime = 0;
-    lastLineTypeWasSingle = true;
     tripleLineDetectionTimeMs = 0;
 }
 
@@ -46,13 +44,13 @@ static float _line_RunLineDetectionOnPartialData(int startingIndex, int length, 
     for (int i = startingIndex; i < startingIndex + length; i++) 
     {
         sum_adc += adcValues[i];
-        wsum_adc += adcValues[i] * ((i - 16) * 2 + 1);
+        wsum_adc += adcValues[i] * ((i - 16));
     }
 
     if (sum_adc == 0)
         return 0.0f;
 
-    return ((float)wsum_adc) / ((float)sum_adc) * 0.5f;
+    return ((float)wsum_adc) / ((float)sum_adc);
 }
 
 
@@ -71,9 +69,9 @@ static int _line_DetectLineChunks(line_DetectionChunkType chunks[3], uint16_t ad
                 chunkActivationCnt++;
                 if (chunkActivationCnt == 2)
                 {
+                	chunks[chunkNum].startPos = p + 1 - chunkActivationCnt;
                     chunkActivationCnt = 0;
                     chunkIsActive = true;
-                    chunks[chunkNum].startPos = p + 1 - chunkActivationCnt;
                 }
             }
             else
@@ -88,9 +86,9 @@ static int _line_DetectLineChunks(line_DetectionChunkType chunks[3], uint16_t ad
                 chunkActivationCnt++;
                 if (chunkActivationCnt == 2)
                 {
+                	chunks[chunkNum].endPos = p + 1 - chunkActivationCnt;
                     chunkActivationCnt = 0;
                     chunkIsActive = false;
-                    chunks[chunkNum].endPos = p + 1 - chunkActivationCnt;
                     chunkNum++;
                     if (chunkNum == 3)
                         return chunkNum;
@@ -126,15 +124,16 @@ static void _line_ShowFbLeds(uint16_t adcValues[32])
 
 static float _line_DetectMainLine(uint16_t adcValues[32], line_DetectionChunkType lineChunks[3], int lineChunkNum)
 {
+    int selectedChunk = 0;
     if (lineChunkNum == 0)
         return 0.0f;
     if (lineChunkNum == 1 || currentParams.useSingleLineDetection)
     {
-        return _line_RunLineDetectionOnPartialData(0, 32, adcValues);
+        selectedChunk = 0;
+        //return _line_RunLineDetectionOnPartialData(0, 32, adcValues);
     }
 
-    int selectedChunk = 0;
-    if (lineChunkNum == 2)      // TODO: remove this useless overcomplicated piece of shit
+    else if (lineChunkNum == 2)      // TODO: remove this useless overcomplicated piece of shit
     {
         float c1Mid = (lineChunks[0].startPos + lineChunks[0].endPos - 31) * 0.5f;
         float c2Mid = (lineChunks[1].startPos + lineChunks[1].endPos - 31) * 0.5f;
@@ -147,8 +146,8 @@ static float _line_DetectMainLine(uint16_t adcValues[32], line_DetectionChunkTyp
     {
         selectedChunk = 1;
     }
-    int start = fmax(lineChunks[selectedChunk].startPos - 2, 0);
-    int length = fmax(lineChunks[selectedChunk].endPos + 2, 31) - lineChunks[selectedChunk].startPos;
+    int start = fmax(lineChunks[selectedChunk].startPos - 1, 0);
+    int length = fmin(lineChunks[selectedChunk].endPos + 1, 31) - lineChunks[selectedChunk].startPos;
     return _line_RunLineDetectionOnPartialData(start, length, adcValues);
 }
 
@@ -159,6 +158,15 @@ void line_Process()
     LS_ADC_Values_Type adcValues;
     LS_GetADCValues(&adcValues);
 
+    // LS_LED_Values_Type led_values;
+    // printf("\n\nLine Sensor ADC Values:\n ");
+    // for (int i = 0; i < 32; i++)
+    // {
+    //     printf("%d ", adcValues.front_adc[i]);
+    //     led_values.front_led[i] = !(adcValues.front_adc[i] < currentParams.adcThreshold);
+    // }
+    // LS_SetFbLEDs(&led_values);
+
     _line_ShowFbLeds(adcValues.front_adc);
 
     line_DetectionChunkType lineChunks[3];
@@ -166,12 +174,14 @@ void line_Process()
 
     if (detectedLineChunkNum > 0)
         lastLineDetectionTime = HAL_GetTick();
-    if (detectedLineChunkNum == 0 && HAL_GetTick() - lastLineDetectionTime > 200)
+    if (detectedLineChunkNum == 0 && HAL_GetTick() - lastLineDetectionTime > 1000)
         currentState = LINE_STATE_NO_LINE;
+
+    uint32_t now = HAL_GetTick();
 
     switch (currentState)
     {
-        case LINE_NO_LINE:
+        case LINE_STATE_NO_LINE:
         {
             if (detectedLineChunkNum > 0)
             {
@@ -189,8 +199,7 @@ void line_Process()
             if (detectedLineChunkNum == 3 && !currentParams.useSingleLineDetection)
             {
                 currentState = LINE_STATE_MULTI_LINE_DETECTED;
-                tripleLineDetectionTimeMs = lastTripleLineTimeMs = HAL_GetTick();
-                lastLineTypeWasSingle = false;
+                tripleLineDetectionTimeMs = HAL_GetTick();
             }
             break;
         }
@@ -205,23 +214,46 @@ void line_Process()
             lastDetectedLinePos = _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum);
             if (detectedLineChunkNum == 1)
             {
-                tripleLineDetectionTimeMs = HAL_GetTick();
-                if (!lastLineTypeWasSingle)
-                {
-                    lastLineTypeWasSingle = true;
-                }
-                if (HAL_GetTick() - lastTripleLineTimeMs > 1000)
+                if (now - tripleLineDetectionTimeMs < 50)
                 {
                     currentState = LINE_STATE_SINGLE_LINE;
                 }
+                else
+                {
+                    currentState = LINE_STATE_SINGLE_AFTER_MULTI;
+                    tripleLineDetectionTimeMs = now;
+                }                
             }
-            else if (detectedLineChunkNum == 3)
+            else if (now - tripleLineDetectionTimeMs > 80)
             {
-                lastTripleLineTimeMs = HAL_GetTick();
-                if (lastLineTypeWasSingle)
+                currentState = LINE_STATE_TRIPLE_LINE;
+            }
+            break;
+        }
+        case LINE_STATE_SINGLE_AFTER_MULTI:
+        {
+            if (detectedLineChunkNum == 0)
+            {
+                currentState = LINE_STATE_SINGLE_LINE;
+                break;
+            }
+
+            lastDetectedLinePos = _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum);
+            if (detectedLineChunkNum == 3)
+            {
+                if (now - tripleLineDetectionTimeMs < 50)
+                {
+                    currentState = LINE_STATE_MULTI_LINE_DETECTED;
+                }
+                else
+                {
                     currentState = LINE_STATE_TRIPLE_LINE_DASHED;
-                else if (HAL_GetTick() - tripleLineDetectionTimeMs > 1000)
-                    currentState = LINE_STATE_TRIPLE_LINE;
+                }                
+                tripleLineDetectionTimeMs = now;
+            }
+            else if (now - tripleLineDetectionTimeMs > 300)
+            {
+                currentState = LINE_STATE_SINGLE_LINE;
             }
             break;
         }
@@ -235,14 +267,16 @@ void line_Process()
             }
 
             lastDetectedLinePos = _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum);
-            if (detectedLineChunkNum == 3)
+            if (detectedLineChunkNum > 1)
             {
-                lastTripleLineTimeMs = HAL_GetTick();
+                tripleLineDetectionTimeMs = now;
             }
             else
             {
-                if (HAL_GetTick() - lastTripleLineTimeMs > 1000)
+                if (now - tripleLineDetectionTimeMs > 300)
+                {
                     currentState = LINE_STATE_SINGLE_LINE;
+                }
             }
         }
         break;
@@ -258,6 +292,7 @@ void line_GetDetectionResult(line_DetectionResultType* result)
             break;
         case LINE_STATE_SINGLE_LINE:
         case LINE_STATE_MULTI_LINE_DETECTED:
+        case LINE_STATE_SINGLE_AFTER_MULTI:
             result->lineType = LINE_SINGLE_LINE;
             break;
         case LINE_STATE_TRIPLE_LINE:

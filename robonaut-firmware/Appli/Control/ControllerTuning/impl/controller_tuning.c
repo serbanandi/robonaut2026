@@ -2,10 +2,15 @@
 #include "controller_tuning.h"
 
 #include "SimpleLogger/SimpleLogger.h"
+#include "LineProcessor/line_interface.h"
 
 #include "SSD1306/ssd1306_interface.h"
 #include "SSD1306/ssd1306_fonts.h"
 #include "UserInput/ui_interface.h"
+
+#include <stdio.h>
+
+extern line_DetectionResultType line_detection_result;
 
 static float tuning_parameters[6];
 static tuning_ParameterType param;
@@ -36,57 +41,57 @@ static void _tuning_PrintUI(void) {
             break;
     }
     ssd1306_WriteString(buffer, Font_6x8, 0);
-
+if(state != APPLY_PARAM){
     ssd1306_SetCursor(0, 10);
     snprintf(buffer, sizeof(buffer), "Threshold: %d\n", (int) tuning_parameters[THRESHOLD]);
-    if ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == THRESHOLD)
-        ssd1306_WriteString(buffer, Font_7x10, 0);
-    else
-        ssd1306_WriteString(buffer, Font_6x8, 0);
+	ssd1306_WriteString(buffer, Font_6x8, ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == THRESHOLD));
 
     ssd1306_SetCursor(0, 20);
-    snprintf(buffer, sizeof(buffer), "P: %d.%d%d\n", (int) tuning_parameters[P_COEFF], 
-                                                     (int)((tuning_parameters[P_COEFF] - (int)tuning_parameters[P_COEFF]) * 10),
-                                                     (int)((tuning_parameters[P_COEFF] - (int)tuning_parameters[P_COEFF]) * 100) % 10);
-    if ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == P_COEFF)
-        ssd1306_WriteString(buffer, Font_7x10, 1);
-    else
-        ssd1306_WriteString(buffer, Font_6x8, 0);
+    snprintf(buffer, sizeof(buffer), "P: %.2f\n", tuning_parameters[P_COEFF]);
+    ssd1306_WriteString(buffer, Font_6x8, ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == P_COEFF));
 
     ssd1306_SetCursor(0, 30);
-    snprintf(buffer, sizeof(buffer), "I: %d.%d%d\n", (int) tuning_parameters[I_COEFF], 
-                                                     (int)((tuning_parameters[I_COEFF] - (int)tuning_parameters[I_COEFF]) * 10),
-                                                     (int)((tuning_parameters[I_COEFF] - (int)tuning_parameters[I_COEFF]) * 100) % 10);
-    if ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == I_COEFF)
-        ssd1306_WriteString(buffer, Font_7x10, 0);
-    else
-        ssd1306_WriteString(buffer, Font_6x8, 0);
+    snprintf(buffer, sizeof(buffer), "I: %.3f\n", tuning_parameters[I_COEFF]);
+    ssd1306_WriteString(buffer, Font_6x8, ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == I_COEFF));
 
     ssd1306_SetCursor(0, 40);
-    snprintf(buffer, sizeof(buffer), "D: %d.%d%d\n", (int) tuning_parameters[D_COEFF], 
-                                                     (int)((tuning_parameters[D_COEFF] - (int)tuning_parameters[D_COEFF]) * 10),
-                                                     (int)((tuning_parameters[D_COEFF] - (int)tuning_parameters[D_COEFF]) * 100) % 10);
-    if ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == D_COEFF)
-        ssd1306_WriteString(buffer, Font_7x10, 0);
-    else
-        ssd1306_WriteString(buffer, Font_6x8, 0);
+    snprintf(buffer, sizeof(buffer), "D: %.3f\n", tuning_parameters[D_COEFF]);
+    ssd1306_WriteString(buffer, Font_6x8, ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == D_COEFF));
 
     ssd1306_SetCursor(0, 50);
-    snprintf(buffer, sizeof(buffer), "Speed: %d.%d%d\n", (int) tuning_parameters[SPEED], 
-                                                         (int)((tuning_parameters[SPEED] - (int)tuning_parameters[SPEED]) * 10),
-                                                         (int)((tuning_parameters[SPEED] - (int)tuning_parameters[SPEED]) * 100) % 10);
-    if ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == SPEED)
-        ssd1306_WriteString(buffer, Font_7x10, 0);
-    else
-        ssd1306_WriteString(buffer, Font_6x8, 0);
+    snprintf(buffer, sizeof(buffer), "Speed: %.2f\n", tuning_parameters[SPEED]);
+
+    ssd1306_WriteString(buffer, Font_6x8, ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == SPEED));
 
     ssd1306_SetCursor(0, 60);
     snprintf(buffer, sizeof(buffer), "Mode: %d\n", (int) tuning_parameters[MODE]);
-    if ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == MODE)
-        ssd1306_WriteString(buffer, Font_7x10, 0);
-    else
-        ssd1306_WriteString(buffer, Font_6x8, 0);
+    ssd1306_WriteString(buffer, Font_6x8, ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == MODE));
+}
+else{
+	ssd1306_SetCursor(0, 10);
+	snprintf(buffer, sizeof(buffer), "p: %f\n", line_detection_result.position);
+	ssd1306_WriteString(buffer, Font_6x8, 0);
 
+    ssd1306_SetCursor(0, 20);
+    switch (line_detection_result.lineType) {
+        case LINE_NO_LINE:
+            snprintf(buffer, sizeof(buffer), "Line: NO LINE\n");
+            break;
+        case LINE_SINGLE_LINE:
+            snprintf(buffer, sizeof(buffer), "Line: SINGLE LINE\n");
+            break;
+        case LINE_TRIPLE_LINE:
+            snprintf(buffer, sizeof(buffer), "Line: TRIPLE LINE\n");
+            break;
+        case LINE_TRIPLE_LINE_DASHED:
+            snprintf(buffer, sizeof(buffer), "Line: TRIPLE DASHED\n");
+            break;
+        default:
+            snprintf(buffer, sizeof(buffer), "Line: UNKNOWN\n");
+            break;
+    }
+    ssd1306_WriteString(buffer, Font_6x8, 0);
+}
     ssd1306_UpdateScreen();
 }
 
@@ -97,10 +102,12 @@ static void _tuning_AdjustParameter(tuning_ParameterType parameter, int32_t adju
         case THRESHOLD:
             adjustmentFactor = 1.0f;
             break;
-        case P_COEFF:
         case I_COEFF:
-        case D_COEFF:
             adjustmentFactor = 0.001f;
+            break;
+        case P_COEFF:
+        case D_COEFF:
+            adjustmentFactor = 0.01f;
             break;
         case SPEED:
             adjustmentFactor = 0.01f;
@@ -134,16 +141,16 @@ static void _tuning_ApplyParameters(void) {
     applied_params->mode = (tuning_parameters[MODE] >= 0.5f) ? true : false;
 }
 
-void tuning_Init(const tuning_ParametersType* params){
+void tuning_Init(tuning_ParametersType* params){
     // Initialize controller tuning here
     applied_params = params;
 
-    tuning_parameters[THRESHOLD] = 1600.0f;
-    tuning_parameters[P_COEFF] = 1.0f;
+    tuning_parameters[THRESHOLD] = 900.0f;
+    tuning_parameters[P_COEFF] = 0.18f;
     tuning_parameters[I_COEFF] = 0.0f;
-    tuning_parameters[D_COEFF] = 0.0f;
-    tuning_parameters[SPEED] = 0.0f;
-    tuning_parameters[MODE] = 0.;
+    tuning_parameters[D_COEFF] = 0.32f;
+    tuning_parameters[SPEED] = 0.2f;
+    tuning_parameters[MODE] = 0.0f;
 
     _tuning_ApplyParameters();
 
@@ -154,10 +161,8 @@ void tuning_Init(const tuning_ParametersType* params){
 void tuning_Process(void){
     static int32_t lastEncoderPos = 0;
     static int32_t currentEncoderPos = 0;
-    float servo_setpoint = 0.0f;
     ui_StateType ui_state;
 
-    ui_Process();
     ui_GetButtonState(&ui_state);
     lastEncoderPos = currentEncoderPos;
     currentEncoderPos = ui_GetEncoderPosition();
@@ -195,4 +200,9 @@ void tuning_Process(void){
     }
 
     
+}
+
+void tuning_Stop(void)
+{
+    state = IDLE;
 }

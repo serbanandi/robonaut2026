@@ -10,6 +10,9 @@
 #include "Servo/servo_interface.h"
 #include "MotorControl/mot_interface.h"
 
+#include <stdio.h>
+#include <stdarg.h>
+
 
 static bool motorEnabled = false;
 
@@ -22,14 +25,16 @@ void test_Init(void)
 
 void test_ProcessLineSensors(void)
 {
-    const uint16_t led_adc_threshold = 1600;
+    const uint16_t led_adc_threshold = 700;
     LS_ADC_Values_Type adc_values;
     LS_LED_Values_Type led_values;
 
     LS_Process();
     LS_GetADCValues(&adc_values);
+    printf("\n\nLine Sensor ADC Values:\n ");
     for (int i = 0; i < 32; i++)
     {
+        printf("%d ", adc_values.front_adc[i]);
         led_values.front_led[i] = !(adc_values.front_adc[i] < led_adc_threshold);
         led_values.rear_led[i]  = !(adc_values.rear_adc[i]  < led_adc_threshold);
     }

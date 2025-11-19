@@ -2,7 +2,7 @@
 #include "main.h"
 #include <stdint.h>
 
-#define MOT_MAX_PWR       0.3f
+#define MOT_MAX_PWR       0.5f
 
 static uint32_t motorTimerPeriod = 0;
 static uint32_t minPulseWidth = 0;

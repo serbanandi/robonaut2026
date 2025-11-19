@@ -50,6 +50,7 @@ static float CTRL_CalculateError(LS_ADC_Values_Type adc){
 	return e;
 }
 
+
 void CTRL_InitLoop(){
 	error = 0;
 	last_error = 0;

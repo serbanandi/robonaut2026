@@ -17,13 +17,15 @@
 #include "LineProcessor/line_interface.h"
 #include "ControllerTuning/tuning_interface.h"
 
+#include <stdio.h>
+#include <stdarg.h>
+
 
 static tuning_ParametersType tuning_params;
 static line_ParamSettingsType line_params;
-static line_DetectionResultType line_detection_result;
+line_DetectionResultType line_detection_result;
 
 static void NPUCache_config(void);
-
 
 void sys_Init(void)
 {
@@ -60,29 +62,59 @@ void sys_Init(void)
 
 void sys_Run(void)
 {
+    // while(1)
+    // {
+    //     static uint32_t lastTestProcessTime = 0;
+    //     if (HAL_GetTick() - lastTestProcessTime >= 100)
+    //     {
+    //         lastTestProcessTime = HAL_GetTick();
+    //         test_ProcessAll();
+    //     }
+    // }
+
     float control_signal;
+    uint32_t lastProcessTime = 0;
+    uint32_t lastLogTime = 0;
     while (1)
     {
+        uint32_t currentTime = HAL_GetTick();
+        if (currentTime - lastProcessTime < 10)
+            continue;
+        ui_Process();
+        lastProcessTime = currentTime;
         line_Process();
         line_GetDetectionResult(&line_detection_result);
-        tuning_Process();
-        if (HAL_GetTick() % 10 == 0) {
-            if(tuning_params.motor_enabled) {
-                line_params.adcThreshold = tuning_params.threshold;
-                line_params.useSingleLineDetection = tuning_params.mode;
-                line_SetParams(&line_params);
+        printf("%f\n", line_detection_result.position);
 
-                control_signal = CTRL_RunLoop_TUNING(line_GetLastDetectedLinePos(), 
-                                                     tuning_params.p_coeff, 
-                                                     tuning_params.i_coeff, 
-                                                     tuning_params.d_coeff, 
-                                                     0.01f);
+        tuning_Process();
+
+        line_params.adcThreshold = tuning_params.threshold;
+		line_params.useSingleLineDetection = tuning_params.mode;
+		line_SetParams(&line_params);
+        if(line_detection_result.lineType == LINE_NO_LINE) {
+        	mot_Enable(false);
+            mot_SetSpeed(-tuning_params.speed);
+            servo_SetAngle(SERVO_FRONT, 0.0f);
+            tuning_Stop();
+        } else {
+            if(tuning_params.motor_enabled) {
+                control_signal = CTRL_RunLoop_TUNING(-line_detection_result.position,
+                                                    tuning_params.p_coeff, 
+                                                    tuning_params.i_coeff, 
+                                                    tuning_params.d_coeff, 
+                                                    0.1f);
                 servo_SetAngle(SERVO_FRONT, control_signal);
                 
-                mot_SetSpeed(tuning_params.speed);
+                if (line_detection_result.lineType == LINE_TRIPLE_LINE_DASHED) 
+                    mot_SetSpeed(-0.42f);
+                else if (line_detection_result.lineType == LINE_TRIPLE_LINE) 
+                    mot_SetSpeed(-tuning_params.speed);
+                
+                //mot_SetSpeed(-tuning_params.speed);
                 mot_Enable(true);
             } else {
-                mot_Enable(false);
+            	mot_Enable(false);
+                mot_SetSpeed(-tuning_params.speed);
                 servo_SetAngle(SERVO_FRONT, 0.0f);
                 CTRL_InitLoop();
             }

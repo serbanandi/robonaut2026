@@ -24,17 +24,38 @@ void ui_Process()
     int currentA = HAL_GPIO_ReadPin(UI_A_GPIO_Port, UI_A_Pin);
     int currentB = HAL_GPIO_ReadPin(UI_B_GPIO_Port, UI_B_Pin);
 
-    if (lastA == 0 && currentA == 1) 
     {
-        if (currentB == 0) 
+        static uint32_t lastEncoderDebounceTime = 0;
+        const uint32_t ENCODER_DEBOUNCE_MS = 10;
+        uint32_t now = HAL_GetTick();
+
+        if (lastA == 0 && currentA == 1)
         {
-            encoderPosition++;
-        } 
-        else 
-        {
-            encoderPosition--;
+            if ((now - lastEncoderDebounceTime) >= ENCODER_DEBOUNCE_MS)
+            {
+                if (currentB == 0)
+                {
+                    encoderPosition++;
+                }
+                else
+                {
+                    encoderPosition--;
+                }
+                lastEncoderDebounceTime = now;
+            }
         }
     }
+    // else if (lastA == 1 && currentA == 0)
+    // {
+    //     if (currentB == 0) 
+    //     {
+    //         encoderPosition++;
+    //     } 
+    //     else 
+    //     {
+    //         encoderPosition--;
+    //     }
+    // }
 
     lastA = currentA;
 
