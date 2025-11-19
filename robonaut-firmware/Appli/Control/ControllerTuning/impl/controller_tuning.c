@@ -47,7 +47,7 @@ if(state != APPLY_PARAM){
 	ssd1306_WriteString(buffer, Font_6x8, ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == THRESHOLD));
 
     ssd1306_SetCursor(0, 20);
-    snprintf(buffer, sizeof(buffer), "P: %.2f\n", tuning_parameters[P_COEFF]);
+    snprintf(buffer, sizeof(buffer), "P: %.3f\n", tuning_parameters[P_COEFF]);
     ssd1306_WriteString(buffer, Font_6x8, ((state == SELECT_PARAM || state == ADJUST_PARAM)  && param == P_COEFF));
 
     ssd1306_SetCursor(0, 30);
@@ -103,9 +103,9 @@ static void _tuning_AdjustParameter(tuning_ParameterType parameter, int32_t adju
             adjustmentFactor = 1.0f;
             break;
         case I_COEFF:
+        case P_COEFF:
             adjustmentFactor = 0.001f;
             break;
-        case P_COEFF:
         case D_COEFF:
             adjustmentFactor = 0.01f;
             break;
@@ -146,10 +146,10 @@ void tuning_Init(tuning_ParametersType* params){
     applied_params = params;
 
     tuning_parameters[THRESHOLD] = 900.0f;
-    tuning_parameters[P_COEFF] = 0.18f;
-    tuning_parameters[I_COEFF] = 0.0f;
+    tuning_parameters[P_COEFF] = 0.105f;
+    tuning_parameters[I_COEFF] = 0.005f;
     tuning_parameters[D_COEFF] = 0.32f;
-    tuning_parameters[SPEED] = 0.2f;
+    tuning_parameters[SPEED] = 0.22f;
     tuning_parameters[MODE] = 0.0f;
 
     _tuning_ApplyParameters();

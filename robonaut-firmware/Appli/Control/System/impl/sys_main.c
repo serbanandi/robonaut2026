@@ -72,9 +72,11 @@ void sys_Run(void)
     //     }
     // }
 
-    float control_signal;
+    float control_signal, speed;
     uint32_t lastProcessTime = 0;
     uint32_t lastLogTime = 0;
+    uint32_t lastFastTime = 0, lastSlowTime = 0;
+    uint8_t speed_mode = 0; // 0 -slow, 1 - fast
     while (1)
     {
         uint32_t currentTime = HAL_GetTick();
@@ -106,11 +108,29 @@ void sys_Run(void)
                 servo_SetAngle(SERVO_FRONT, control_signal);
                 
                 if (line_detection_result.lineType == LINE_TRIPLE_LINE_DASHED) 
-                    mot_SetSpeed(-0.42f);
+                    speed_mode = 1; //fast
                 else if (line_detection_result.lineType == LINE_TRIPLE_LINE) 
-                    mot_SetSpeed(-tuning_params.speed);
+                    speed_mode = 0; //slow
                 
                 //mot_SetSpeed(-tuning_params.speed);
+                if (speed_mode == 0){
+                    lastSlowTime = HAL_GetTick();
+                    if (HAL_GetTick()-lastFastTime < 200)
+                        speed = -(tuning_params.speed*(1 - fmin(HAL_GetTick()-lastFastTime,200)/200.0f ));
+                    else if (HAL_GetTick()-lastFastTime < 300)
+                        speed = -(tuning_params.speed*(fmin(HAL_GetTick()-lastFastTime-200,100)/100.0f));
+                    else 
+                        speed = -(tuning_params.speed);
+
+                    mot_SetSpeed(speed);
+                } else if(speed_mode == 1){
+                    lastFastTime = HAL_GetTick();
+                    if(HAL_GetTick()-lastSlowTime < 400)
+                        speed = -(tuning_params.speed);
+                    else    
+                        speed = -0.48f;
+                    mot_SetSpeed(speed);
+                }
                 mot_Enable(true);
             } else {
             	mot_Enable(false);
