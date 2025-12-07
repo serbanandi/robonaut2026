@@ -30,8 +30,6 @@ extern "C" {
 
 /* USER CODE BEGIN Includes */
 
-extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
-
 /* USER CODE END Includes */
 
 extern I2C_HandleTypeDef hi2c1;
