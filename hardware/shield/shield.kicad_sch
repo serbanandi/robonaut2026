@@ -15177,6 +15177,28 @@
 		)
 		(uuid "2402d5fd-2d84-4123-af5b-beeee1da1c4c")
 	)
+	(text "!!!"
+		(exclude_from_sim no)
+		(at 295.656 264.414 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+				(color 255 0 1 1)
+			)
+		)
+		(uuid "2683f8fb-6b41-4fdf-987c-730fbb1ec818")
+	)
+	(text "!!!"
+		(exclude_from_sim no)
+		(at 273.304 302.768 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+				(color 255 0 1 1)
+			)
+		)
+		(uuid "2844899b-4959-4aee-91e5-24b7b89b31dd")
+	)
 	(text "Line sensors"
 		(exclude_from_sim no)
 		(at 318.77 98.806 0)
@@ -15196,6 +15218,28 @@
 			)
 		)
 		(uuid "3b063093-6966-45ef-a4a4-72e56995aa71")
+	)
+	(text "!!!"
+		(exclude_from_sim no)
+		(at 207.772 282.194 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+				(color 255 0 1 1)
+			)
+		)
+		(uuid "46a44500-6e66-46e8-a414-d0de1d7bab23")
+	)
+	(text "!!!"
+		(exclude_from_sim no)
+		(at 295.656 274.574 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+				(color 255 0 1 1)
+			)
+		)
+		(uuid "4d91dab5-5ba4-41ba-b7ca-e43e39809eb3")
 	)
 	(text "Polyfuse"
 		(exclude_from_sim no)
@@ -19184,7 +19228,7 @@
 		)
 		(uuid "070f0d9a-96cb-4c95-9ef1-3535d6ea029c")
 	)
-	(label "GEN_TIM"
+	(label "MOT_PWM1"
 		(at 307.34 265.43 180)
 		(effects
 			(font
@@ -19204,7 +19248,7 @@
 		)
 		(uuid "0771d838-bdaf-4de5-8da7-03ccdcf0e098")
 	)
-	(label "MOT_PWM1"
+	(label "GEN_TIM"
 		(at 264.16 303.53 0)
 		(effects
 			(font
@@ -19373,6 +19417,16 @@
 			(justify right bottom)
 		)
 		(uuid "224de6b6-3943-400a-a837-92e95d6914b8")
+	)
+	(label "MOT_PWM2"
+		(at 307.34 275.59 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "24014113-0e01-498b-b29c-1794918443e0")
 	)
 	(label "IMU_MISO"
 		(at 220.98 252.73 180)
@@ -19954,7 +20008,7 @@
 		)
 		(uuid "9a60c160-245d-4cba-ba1b-75cad5b632d8")
 	)
-	(label "MOT_PWM2"
+	(label "LINE_AD_CS4"
 		(at 220.98 283.21 180)
 		(effects
 			(font
@@ -20453,16 +20507,6 @@
 			(justify left bottom)
 		)
 		(uuid "efdca908-acc8-4b9b-bdc3-de180443f4af")
-	)
-	(label "LINE_AD_CS4"
-		(at 307.34 275.59 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "f07f8803-e997-4f9b-8b3e-27325806bb53")
 	)
 	(label "CMD_RX"
 		(at 326.39 144.78 0)

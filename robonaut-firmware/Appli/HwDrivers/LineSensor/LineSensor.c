@@ -2,6 +2,7 @@
 #include "LineSensor.h"
 #include "MicroTimer/MicroTimer.h"
 #include "SimpleLogger/SimpleLogger.h"
+#include <string.h>
 
 // Types
 typedef enum {
@@ -123,6 +124,91 @@ static bool LS_IR_SetLED(LS_Sensor_Type* sensor, uint8_t act_led)
 	return true;
 }
 
+static void LS_LED_SetLatch(LS_Enable_Type enable)
+{
+	switch (enable) {
+	case Enable:
+		HAL_GPIO_WritePin(LINE_LED_LE_GPIO_Port, LINE_LED_LE_Pin, GPIO_PIN_SET);
+		MT_Delay(1);
+		HAL_GPIO_WritePin(LINE_LED_LE_GPIO_Port, LINE_LED_LE_Pin, GPIO_PIN_RESET);
+		break;
+
+	case Disable:
+	default:
+		HAL_GPIO_WritePin(LINE_LED_LE_GPIO_Port, LINE_LED_LE_Pin, GPIO_PIN_RESET);
+		break;
+	}
+}
+
+static void LS_LED_SetOutput(LS_Enable_Type enable)
+{
+	switch (enable) {
+	case Enable:
+		HAL_GPIO_WritePin(_LINE_LED_OE_GPIO_Port, _LINE_LED_OE_Pin, GPIO_PIN_RESET);
+		break;
+
+	case Disable:
+	default:
+		HAL_GPIO_WritePin(_LINE_LED_OE_GPIO_Port, _LINE_LED_OE_Pin, GPIO_PIN_SET);
+		break;
+	}
+}
+
+bool LS_SetFbLEDs(const LS_LED_Values_Type* led_values)
+{
+	//Set front LEDs
+	if (front_sensor.spi != NULL)
+	{
+		uint32_t cmd = 0;
+		int q = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			uint8_t byte = 0;
+			for (int bit = 0; bit < 8; bit++)
+			{
+				byte = led_values->front_led[q++] ? (byte >> 1) | 0x80 : (byte >> 1);
+			}
+			cmd = (cmd << 8) | byte;
+		}
+
+		if (HAL_SPI_Transmit(front_sensor.spi, (uint8_t*)&cmd, sizeof(cmd), SPI_TIMEOUT_MS) != HAL_OK)
+			return false;
+	}
+
+	//Set rear LEDs
+	if (rear_sensor.spi != NULL)
+	{
+		uint32_t cmd = 0;
+		int q = 0;
+		for (int i = 0; i < 4; i++)
+		{
+			uint8_t byte = 0;
+			for (int bit = 0; bit < 8; bit++)
+			{
+				byte = led_values->rear_led[q++] ? (byte >> 1) | 0x80 : (byte >> 1);
+			}
+			cmd = (cmd << 8) | byte;
+		}
+
+		if (HAL_SPI_Transmit(rear_sensor.spi, (uint8_t*)&cmd, sizeof(cmd), SPI_TIMEOUT_MS) != HAL_OK)
+			return false;
+	}
+
+	LS_LED_SetLatch(Enable);
+	LS_LED_SetOutput(Enable);
+
+	return true;
+}
+
+void LS_GetADCValues(LS_ADC_Values_Type* adc_values)
+{
+	if (adc_values == NULL)
+		return;
+
+	memcpy(adc_values->front_adc, front_sensor.adc, sizeof(front_sensor.adc));
+	memcpy(adc_values->rear_adc, rear_sensor.adc, sizeof(rear_sensor.adc));
+}
+
 static bool LS_ADC_Read(LS_Sensor_Type* sensor, uint8_t act_sens, uint8_t block_num)
 {
 	assert(sensor != NULL);
@@ -166,7 +252,7 @@ static bool LS_ADC_Valdidate(LS_Sensor_Type* sensor)
 
 static bool LS_Read(void)
 {
-	Log("LS", "read cycle start");
+	//Log("LS", "read cycle start");
 	for (int i = 0; i < 8; i++)
 	{
 		//Light up IR LEDs
@@ -203,7 +289,7 @@ static bool LS_Read(void)
 	if (!LS_ADC_Valdidate(&rear_sensor))
 		return false;
 
-	Log("LS", "read cycle done");
+	//Log("LS", "read cycle done");
 	return true;
 }
 
