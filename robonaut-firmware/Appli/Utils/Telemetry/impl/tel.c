@@ -9,7 +9,7 @@
 #include "Uart/uart_interface.h"
 
 // --- Static Variables ---
-static uart_UartType tel_uart;
+static uart_UartType tel_uart __NON_CACHEABLE;
 static tel_TelemetryVarType registry[TEL_MAX_VARS];
 static uint8_t registryCount = 0;
 
@@ -397,8 +397,10 @@ void tel_Process(void) {
         // Note: The driver provided relies on finding a termination char to return 1.
         // This is problematic for binary streams. 
         // We will manually pull from the circular buffer structure provided in the header.
+
+        uint32_t bytesLeft = (uint16_t)__HAL_DMA_GET_COUNTER(tel_uart.huart->hdmarx);
         
-        if (tel_uart.readPtr == (UART_READ_BUFFER_LENGTH - tel_uart.huart->RxXferCount)) {
+        if (tel_uart.readPtr == (UART_READ_BUFFER_LENGTH - bytesLeft) || (bytesLeft == 0 && tel_uart.readPtr == 0)) {
             break; // Buffer empty (pointers match)
         }
         

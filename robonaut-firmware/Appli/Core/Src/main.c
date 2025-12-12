@@ -67,7 +67,7 @@ static void SystemIsolation_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void MPU_Config(void);
 /* USER CODE END 0 */
 
 /**
@@ -78,7 +78,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  MPU_Config();
   /* USER CODE END 1 */
 
   /* Enable the CPU Cache */
@@ -203,7 +203,7 @@ void PeriphCommonClock_Config(void)
     Error_Handler();
   }
   /* set GPDMA1 channel 1 used by USART3 */
-  if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel1,DMA_CHANNEL_SEC|DMA_CHANNEL_PRIV|DMA_CHANNEL_SRC_NSEC|DMA_CHANNEL_DEST_SEC)!= HAL_OK )
+  if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel1,DMA_CHANNEL_SEC|DMA_CHANNEL_PRIV|DMA_CHANNEL_SRC_SEC|DMA_CHANNEL_DEST_SEC)!= HAL_OK )
   {
     Error_Handler();
   }
@@ -218,6 +218,42 @@ void PeriphCommonClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/* USER CODE BEGIN 4 */
+void MPU_Config(void)
+{
+  MPU_Region_InitTypeDef default_config = {0};
+  MPU_Attributes_InitTypeDef attr_config = {0};
+  uint32_t primask_bit = __get_PRIMASK();
+  __disable_irq();
+
+  /* disable the MPU */
+  HAL_MPU_Disable();
+
+  /* create an attribute configuration for the MPU */
+  attr_config.Attributes = INNER_OUTER(MPU_NOT_CACHEABLE);
+  attr_config.Number = MPU_ATTRIBUTES_NUMBER0;
+
+  HAL_MPU_ConfigMemoryAttributes(&attr_config);
+
+  /* Create a non cacheable region */
+  /*Normal memory type, code execution allowed */
+  default_config.Enable = MPU_REGION_ENABLE;
+  default_config.Number = MPU_REGION_NUMBER0;
+  default_config.BaseAddress = __NON_CACHEABLE_SECTION_BEGIN;
+  default_config.LimitAddress = __NON_CACHEABLE_SECTION_END;
+  default_config.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  default_config.AccessPermission = MPU_REGION_ALL_RW;
+  default_config.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+  default_config.AttributesIndex = MPU_ATTRIBUTES_NUMBER0;
+  HAL_MPU_ConfigRegion(&default_config);
+
+  /* enable the MPU */
+  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+
+  /* Exit critical section to lock the system and avoid any issue around MPU mechanisme */
+  __set_PRIMASK(primask_bit);
+}
 
 /* USER CODE END 4 */
 

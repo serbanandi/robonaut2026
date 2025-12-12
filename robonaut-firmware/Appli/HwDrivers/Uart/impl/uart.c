@@ -9,7 +9,7 @@
 
 static void uart_HandleReceiveCplt(uart_UartType *uart)
 {
-	HAL_UART_Receive_IT(uart->huart, (uint8_t*)uart->readCircularBuffer, UART_READ_BUFFER_LENGTH);
+	HAL_UART_Receive_DMA(uart->huart, (uint8_t*)uart->readCircularBuffer, UART_READ_BUFFER_LENGTH);
 }
 
 static void uart_HandleTransmitCplt(uart_UartType *uart)
@@ -23,13 +23,13 @@ static void uart_HandleTransmitCplt(uart_UartType *uart)
 	if(uart->startOfWriteData <= uart->endOfWriteData)
     {
 		charCount = uart->endOfWriteData - uart->startOfWriteData + 1;
-		HAL_UART_Transmit_IT(uart->huart, (uint8_t*)uart->writeCircularBuffer + uart->startOfWriteData, charCount);
+		HAL_UART_Transmit_DMA(uart->huart, (uint8_t*)uart->writeCircularBuffer + uart->startOfWriteData, charCount);
 		uart->startOfWriteData = -1;
 	}
 	else
     {
 		charCount = UART_WRITE_BUFFER_LENGTH - uart->startOfWriteData;
-		HAL_UART_Transmit_IT(uart->huart, (uint8_t*)uart->writeCircularBuffer + uart->startOfWriteData, charCount);
+		HAL_UART_Transmit_DMA(uart->huart, (uint8_t*)uart->writeCircularBuffer + uart->startOfWriteData, charCount);
 		uart->startOfWriteData = 0;
 	}
 }
@@ -48,7 +48,7 @@ uint8_t uart_Init(uart_UartType *uart, UART_HandleTypeDef *huart, IRQn_Type uart
     uint8_t ok = int_SubscribeToInt(INT_UART_TX_CPLT, (int_CallbackFn)uart_HandleTransmitCplt, (void*)uart, (void*)huart);
     ok = ok && int_SubscribeToInt(INT_UART_RX_CPLT, (int_CallbackFn)uart_HandleReceiveCplt, (void*)uart, (void*)huart);
     __HAL_UART_CLEAR_FLAG(huart, UART_CLEAR_OREF);
-	ok = ok && HAL_UART_Receive_IT(uart->huart, (uint8_t*)uart->readCircularBuffer, UART_READ_BUFFER_LENGTH) == HAL_OK;
+	ok = ok && HAL_UART_Receive_DMA(uart->huart, (uint8_t*)uart->readCircularBuffer, UART_READ_BUFFER_LENGTH) == HAL_OK;
 
     return ok;
 }
@@ -74,7 +74,7 @@ uint8_t uart_Transmit(uart_UartType *uart, const uint8_t *str, const size_t size
 			}
             else
             {
-				ok = ok && HAL_UART_Transmit_IT(uart->huart, (uint8_t*)uart->writeCircularBuffer + uart->endOfWriteData + 1, size) == HAL_OK;
+				ok = ok && HAL_UART_Transmit_DMA(uart->huart, (uint8_t*)uart->writeCircularBuffer + uart->endOfWriteData + 1, size) == HAL_OK;
 				uart->transmissionInProgress = 1;
 			}
 		}
@@ -98,7 +98,7 @@ uint8_t uart_Transmit(uart_UartType *uart, const uint8_t *str, const size_t size
                 else
                 {
 					uart->transmissionInProgress = 1;
-					ok = ok && HAL_UART_Transmit_IT(uart->huart, (uint8_t*)uart->writeCircularBuffer, size) == HAL_OK;
+					ok = ok && HAL_UART_Transmit_DMA(uart->huart, (uint8_t*)uart->writeCircularBuffer, size) == HAL_OK;
 				}
 				uart->endOfWriteData = size - 1;
 			}
@@ -112,7 +112,7 @@ uint8_t uart_Transmit(uart_UartType *uart, const uint8_t *str, const size_t size
                 {
 					uart->transmissionInProgress = 1;
 					uart->startOfWriteData = 0;
-					ok = ok && HAL_UART_Transmit_IT(uart->huart, (uint8_t*)uart->writeCircularBuffer + uart->endOfWriteData + 1, spaceTillBufferEnd) == HAL_OK;
+					ok = ok && HAL_UART_Transmit_DMA(uart->huart, (uint8_t*)uart->writeCircularBuffer + uart->endOfWriteData + 1, spaceTillBufferEnd) == HAL_OK;
 				}
 				uart->endOfWriteData = size - spaceTillBufferEnd - 1;
 			}
@@ -128,11 +128,15 @@ uint8_t uart_Transmit(uart_UartType *uart, const uint8_t *str, const size_t size
 
 uint8_t uart_Receive(uart_UartType *uart, uint8_t* data , const size_t maxSize, size_t* receivedSize)
 {
-
-    size_t endPtr = UART_READ_BUFFER_LENGTH - uart->huart->RxXferCount;
+	uint16_t bytesLeft = (uint16_t)__HAL_DMA_GET_COUNTER(uart->huart->hdmarx);
+    size_t endPtr = UART_READ_BUFFER_LENGTH - bytesLeft;
     size_t count = 0;
     while(uart->readPtr != endPtr && count < maxSize)
     {
+		if (bytesLeft == 0 && uart->readPtr == 0)  // Handle if rx restart interrupt has not yet occurred
+		{
+			break;
+		}
         data[count] = uart->readCircularBuffer[uart->readPtr];
         count++;
         uart->readPtr++;

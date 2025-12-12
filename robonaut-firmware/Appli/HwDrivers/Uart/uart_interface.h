@@ -15,7 +15,7 @@ typedef struct {
 	volatile int32_t endOfWriteData;
 	volatile uint8_t transmissionInProgress;
 
-	volatile uint8_t readCircularBuffer[UART_READ_BUFFER_LENGTH];
+	uint8_t readCircularBuffer[UART_READ_BUFFER_LENGTH];
 	uint16_t readPtr;
     uint8_t readTerminationChar;
 } uart_UartType;
