@@ -3,8 +3,8 @@
 
 #include "stm32n6xx_hal.h"
 
-#define UART_WRITE_BUFFER_LENGTH	1048
-#define UART_READ_BUFFER_LENGTH		1048
+#define UART_WRITE_BUFFER_LENGTH	2500
+#define UART_READ_BUFFER_LENGTH		1000
 
 typedef struct {
 	UART_HandleTypeDef* huart;

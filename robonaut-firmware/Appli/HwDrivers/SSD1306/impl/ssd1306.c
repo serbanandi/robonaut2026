@@ -4,7 +4,7 @@
 #include <string.h>  // For memcpy
 #include "i2c.h"
 #include "ssd1306_conf.h"
-#include "int_interface.h"
+#include "IntHandler/int_interface.h"
 
 // Struct to store transformations
 typedef struct {

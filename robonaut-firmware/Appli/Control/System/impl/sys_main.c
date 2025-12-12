@@ -16,6 +16,7 @@
 #include "Control/Control.h"
 #include "LineProcessor/line_interface.h"
 #include "ControllerTuning/tuning_interface.h"
+#include "Telemetry/tel_interface.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -47,6 +48,7 @@ void sys_Init(void)
     CTRL_InitLoop();
     line_Init();
     tuning_Init(&tuning_params);
+    tel_Init();
 
     test_Init();
 
@@ -62,6 +64,77 @@ void sys_Init(void)
 
 void sys_Run(void)
 {
+    uint32_t period = 100;
+    float randomVar = 0.0f;
+    int count = 0;
+    bool toggle = false;
+    int16_t dummyVar = 1234;
+    uint16_t dummyArray[30] = {0};
+    for (int i = 0; i < 30; i++)
+        dummyArray[i] = i * 10;
+    tel_RegisterRW(&randomVar, TEL_FLOAT, "randomV1", 5000);
+    tel_RegisterRW(&period, TEL_UINT32, "period", 400);
+    tel_RegisterR(&count, TEL_INT32, "count", 80);
+    tel_RegisterRW(&toggle, TEL_UINT8, "toggle", 50);
+    tel_RegisterRW(&dummyVar, TEL_INT16, "dummyV2", 100);
+    for (int i = 0; i < 30; i++)
+    {
+        char varName[30];
+        snprintf(varName, sizeof(varName), "dummyArray_long_name_xd[%d]", i);
+        tel_RegisterR(&dummyArray[i], TEL_UINT16, varName, 80);
+    }
+    char inputBuffer[128];
+    while(1)
+    {
+        tel_Process();
+        static uint32_t lastLogTime = 0;
+        if (HAL_GetTick() - lastLogTime >= period)
+        {
+            count++;
+            lastLogTime = HAL_GetTick();
+            tel_Log(TEL_LOG_INFO, "System running. Uptime: %lu ms", HAL_GetTick());
+            if (tel_GetTextInput(inputBuffer, sizeof(inputBuffer)) > 0)
+            {
+                tel_Log(TEL_LOG_INFO, "Received input: %s", inputBuffer);
+            }
+            BSP_LED_Toggle(LED1);
+            for (int i = 0; i < 30; i++)
+            {
+                dummyArray[i] += 1;
+            }
+        }
+    }
+
+    // while (1)
+    // {
+    //     uart_transmit(&tel_uart, (uint8_t *)"Hello world!\n", 13);
+    //     HAL_Delay(1000);
+    // }
+
+    // Example loop that receives data over UART and echoes it back in the form: "Received: <data>\n"
+//    uint8_t rxBuffer[128];
+//    size_t receivedSize = 0;
+//    size_t currentRecvSize = 0;
+//    uint8_t txBuffer[256];
+//    while (1)
+//    {
+//        uint8_t result = uart_Receive(&tel_uart, rxBuffer + receivedSize, sizeof(rxBuffer) - receivedSize, &currentRecvSize);
+//        receivedSize += currentRecvSize;
+//        if (result)
+//        {
+//            // Prepare the response
+//            int n = snprintf((char*)txBuffer, sizeof(txBuffer), "Received: %.*s\n", (int)receivedSize, rxBuffer);
+//            // Transmit the response
+//            uart_Transmit(&tel_uart, txBuffer, n);
+//            receivedSize = 0; // Reset for next reception
+//        }
+//        else if (receivedSize >= sizeof(rxBuffer))
+//        {
+//            // Buffer full without receiving termination character, reset buffer
+//            receivedSize = 0;
+//        }
+//    }
+
     // while(1)
     // {
     //     static uint32_t lastTestProcessTime = 0;

@@ -24,8 +24,9 @@ typedef enum {
 
 /**
  * @brief Initialize the telemetry system.
+ * @return 1 on success, 0 on failure.
  */
-void tel_Init(void);
+uint8_t tel_Init(void);
 
 /**
  * @brief Register a Read-Only variable to be streamed.
@@ -54,6 +55,14 @@ uint8_t tel_RegisterRW(void* data, tel_VarTypeType type, const char* name, uint3
  * @return 1 on success, 0 on failure.
  */
 uint8_t tel_Log(tel_LogLevelType level, const char* fmt, ...);
+
+/**
+ * @brief Get text input from the RPi. Non-blocking.
+ * @param buffer Buffer to store the received text.
+ * @param maxLen Maximum length of the buffer.
+ * @return Number of bytes received, 0 if no new data.
+ */
+uint32_t tel_GetTextInput(char* buffer, uint32_t maxLen);
 
 /**
  * @brief Main telemetry process loop. Call this frequently in your main while(1).

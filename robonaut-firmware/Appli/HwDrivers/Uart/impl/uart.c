@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
-#include "int_interface.h"
+#include "IntHandler/int_interface.h"
 
 
 static void uart_HandleReceiveCplt(uart_UartType *uart)
@@ -47,6 +47,7 @@ uint8_t uart_Init(uart_UartType *uart, UART_HandleTypeDef *huart, IRQn_Type uart
 
     uint8_t ok = int_SubscribeToInt(INT_UART_TX_CPLT, (int_CallbackFn)uart_HandleTransmitCplt, (void*)uart, (void*)huart);
     ok = ok && int_SubscribeToInt(INT_UART_RX_CPLT, (int_CallbackFn)uart_HandleReceiveCplt, (void*)uart, (void*)huart);
+    __HAL_UART_CLEAR_FLAG(huart, UART_CLEAR_OREF);
 	ok = ok && HAL_UART_Receive_IT(uart->huart, (uint8_t*)uart->readCircularBuffer, UART_READ_BUFFER_LENGTH) == HAL_OK;
 
     return ok;
