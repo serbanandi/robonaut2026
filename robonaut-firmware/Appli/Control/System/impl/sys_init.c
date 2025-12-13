@@ -1,0 +1,86 @@
+#include "sys_init.h"
+#include "../sys_interface.h"
+#include "main.h"
+#include "tim.h"
+#include "spi.h"
+
+#include "npu_cache.h"
+#include "NeuralNetwork/NeuralNetwork.h"
+
+#include "SSD1306/ssd1306_interface.h"
+#include "SSD1306/ssd1306_fonts.h"
+#include "UserInput/ui_interface.h"
+#include "Servo/servo_interface.h"
+#include "Drive/drv_interface.h"
+#include "HwTest/test_interface.h"
+#include "Control/Control.h"
+#include "LineSensor/LineSensor.h"
+#include "MicroTimer/MicroTimer.h"
+#include "LineProcessor/line_interface.h"
+#include "ControllerTuning/tuning_interface.h"
+#include "Telemetry/tel_interface.h"
+
+static drv_ControlParamsType telVar_currentDrvParams = {
+    .P = 0.1f,
+    .I = 0.01f,
+    .D = 0.005f,
+    .integralLimit = 10.0f,
+    .periodUs = 1000 // 1 ms
+};
+static float telVar_currentMaxPower = 0.5f;
+
+void sys_Init(void)
+{
+    _sys_NPUCache_config();
+    NN_Init();
+
+    if (!MT_Init(&htim6))
+        Error_Handler();
+    if (!LS_Init(&hspi4, NULL))
+        Error_Handler();
+
+    ssd1306_Init();
+    ui_Init();
+    servo_Init();
+    drv_Init(&telVar_currentDrvParams, telVar_currentMaxPower);
+    line_Init();
+    tel_Init();
+    
+    //CTRL_InitLoop();
+    //tuning_Init(&tuning_params);
+    //test_Init();
+
+    ssd1306_Fill(0);
+    ssd1306_SetCursor(0, 0);
+    ssd1306_WriteString("System Init Success", Font_6x8, 0);
+    ssd1306_UpdateScreen();
+
+    tel_Log(TEL_LOG_INFO, "System initialized successfully.");
+
+    _sys_RegisterTelemetryVariables();
+
+    while (BSP_PB_GetState(BUTTON_USER) != GPIO_PIN_SET) { }
+}
+
+void _sys_RegisterTelemetryVariables(void)
+{
+    tel_RegisterRW(&telVar_currentDrvParams.P, TEL_FLOAT, "drv_P", 1000);
+    tel_RegisterRW(&telVar_currentDrvParams.I, TEL_FLOAT, "drv_I", 1000);
+    tel_RegisterRW(&telVar_currentDrvParams.D, TEL_FLOAT, "drv_D", 1000);
+    tel_RegisterRW(&telVar_currentDrvParams.integralLimit, TEL_FLOAT, "drv_integralLimit", 1000);
+    tel_RegisterRW(&telVar_currentDrvParams.periodUs, TEL_UINT32, "drv_periodUs", 1000);
+    tel_RegisterRW(&telVar_currentMaxPower, TEL_FLOAT, "drv_maxPower", 1000);
+}
+
+void _sys_HandleParamTuning(void)
+{
+    drv_SetControlParams(&telVar_currentDrvParams);
+    drv_SetMaxPower(telVar_currentMaxPower);
+}
+
+void _sys_NPUCache_config(void)
+{
+    npu_cache_enable();
+}
+
+

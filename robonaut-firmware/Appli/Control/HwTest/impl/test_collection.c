@@ -8,7 +8,7 @@
 #include "SSD1306/ssd1306_fonts.h"
 #include "UserInput/ui_interface.h"
 #include "Servo/servo_interface.h"
-#include "MotorControl/mot_interface.h"
+//#include "MotorControl/mot_interface.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -122,21 +122,21 @@ void test_ProcessServoTest(void)
 }
 
 
-void test_ProcessMotorTest(void)
-{
-    if (motorEnabled)
-    {
-        // Set motor speed based on encoder position
-        int32_t encoder_pos = ui_GetEncoderPosition();
-        float motor_speed = encoder_pos * 0.02f; // Scale factor for speed
-        mot_Enable(true);
-        mot_SetSpeed(motor_speed);
-    }
-    else
-    {
-        mot_Enable(false);
-    }
-}
+//void test_ProcessMotorTest(void)
+//{
+//    if (motorEnabled)
+//    {
+//        // Set motor speed based on encoder position
+//        int32_t encoder_pos = ui_GetEncoderPosition();
+//        float motor_speed = encoder_pos * 0.02f; // Scale factor for speed
+//        mot_Enable(true);
+//        mot_SetSpeed(motor_speed);
+//    }
+//    else
+//    {
+//        mot_Enable(false);
+//    }
+//}
 
 
 void test_ProcessAll(void)
@@ -144,6 +144,6 @@ void test_ProcessAll(void)
     test_ProcessLineSensors();
     test_ProcessServoTest();
     test_ShowUiAndOLEDDemo();
-    test_ProcessMotorTest();
+    //test_ProcessMotorTest();
 }
 

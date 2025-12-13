@@ -122,6 +122,7 @@ int main(void)
   MX_UART8_Init();
   MX_TIM17_Init();
   MX_TIM14_Init();
+  MX_TIM7_Init();
   SystemIsolation_Config();
   /* USER CODE BEGIN 2 */
 
@@ -149,6 +150,10 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   
+  BspCOMInit.BaudRate = 921600;
+  if (BSP_COM_Init(COM1, &BspCOMInit) != BSP_ERROR_NONE)
+	  Error_Handler();
+
   sys_Init();
   sys_Run();
 

@@ -1,115 +1,54 @@
 #include "../sys_interface.h"
 #include "sys_main.h"
+#include "sys_init.h"
+#include "stm32n6xx_nucleo.h"
 
-#include "npu_cache.h"
-#include "NeuralNetwork/NeuralNetwork.h"
 #include "LineSensor/LineSensor.h"
 #include "MicroTimer/MicroTimer.h"
-#include "SimpleLogger/SimpleLogger.h"
 
 #include "SSD1306/ssd1306_interface.h"
 #include "SSD1306/ssd1306_fonts.h"
 #include "UserInput/ui_interface.h"
 #include "Servo/servo_interface.h"
-#include "MotorControl/mot_interface.h"
+#include "Drive/drv_interface.h"
 #include "HwTest/test_interface.h"
-#include "Control/Control.h"
 #include "LineProcessor/line_interface.h"
-#include "ControllerTuning/tuning_interface.h"
 #include "Telemetry/tel_interface.h"
+#include "ControllerTuning/tuning_interface.h"
+#include "Control/Control.h"
 
 #include <stdio.h>
 #include <stdarg.h>
-
 
 static tuning_ParametersType tuning_params;
 static line_ParamSettingsType line_params;
 line_DetectionResultType line_detection_result;
 
-static void NPUCache_config(void);
-
-void sys_Init(void)
-{
-    NPUCache_config();
-    NN_Init();
-
-    BspCOMInit.BaudRate = 921600;
-    if (BSP_COM_Init(COM1, &BspCOMInit) != BSP_ERROR_NONE)
-        Error_Handler();
-    if (!MT_Init(&htim6))
-        Error_Handler();
-    if (!LS_Init(&hspi4, NULL))
-        Error_Handler();
-
-    ssd1306_Init();
-    ui_Init();
-    servo_Init();
-    mot_Init();
-    CTRL_InitLoop();
-    line_Init();
-    tuning_Init(&tuning_params);
-    tel_Init();
-
-    test_Init();
-
-    ssd1306_Fill(0);
-    ssd1306_SetCursor(0, 0);
-    ssd1306_WriteString("System Init Success", Font_6x8, 0);
-    ssd1306_UpdateScreen();
-
-    // Wait for user button press
-    while (BSP_PB_GetState(BUTTON_USER) != GPIO_PIN_SET) { }
-}
-
-
 void sys_Run(void)
 {
-    uint32_t period = 100;
-    float randomVar = 0.0f;
-    int count = 0;
-    bool toggle = false;
-    int16_t dummyVar = 1234;
-    uint16_t dummyArray[30] = {0};
-    for (int i = 0; i < 30; i++)
-        dummyArray[i] = i * 10;
-    tel_RegisterRW(&randomVar, TEL_FLOAT, "randomV1", 5000);
-    tel_RegisterRW(&period, TEL_UINT32, "period", 400);
-    tel_RegisterR(&count, TEL_INT32, "count", 80);
-    tel_RegisterRW(&toggle, TEL_UINT8, "toggle", 50);
-    tel_RegisterRW(&dummyVar, TEL_INT16, "dummyV2", 100);
-    for (int i = 0; i < 30; i++)
+    static uint32_t encoderPos;
+    static int32_t encoderSpeed;
+
+    tel_RegisterR(&encoderPos, TEL_UINT32, "Encoder_Position", 100);
+    tel_RegisterR(&encoderSpeed, TEL_INT32, "Encoder_Speed", 100);
+
+    tel_Log(TEL_LOG_INFO, "Entering main loop...");
+
+    while (1)
     {
-        char varName[30];
-        snprintf(varName, sizeof(varName), "dummyArray_long_name_xd[%d]", i);
-        tel_RegisterR(&dummyArray[i], TEL_UINT16, varName, 80);
-    }
-    char inputBuffer[128];
-    while(1)
-    {
+        _sys_HandleParamTuning();
+        encoderPos = drv_GetEncoderCount();
+        encoderSpeed = drv_GetEncoderSpeed();
+        
         tel_Process();
-        static uint32_t lastLogTime = 0;
-        if (HAL_GetTick() - lastLogTime >= period)
+
+        static uint32_t lastBlinkTime = 0;
+        if (HAL_GetTick() - lastBlinkTime >= 500)
         {
-            count++;
-            lastLogTime = HAL_GetTick();
-            tel_Log(TEL_LOG_INFO, "System running. Uptime: %lu ms", HAL_GetTick());
-            if (tel_GetTextInput(inputBuffer, sizeof(inputBuffer)) > 0)
-            {
-                tel_Log(TEL_LOG_INFO, "Received input: %s", inputBuffer);
-            }
+            lastBlinkTime = HAL_GetTick();
             BSP_LED_Toggle(LED1);
-            for (int i = 0; i < 30; i++)
-            {
-                dummyArray[i] += 1;
-            }
         }
     }
-
-    // while (1)
-    // {
-    //     uart_transmit(&tel_uart, (uint8_t *)"Hello world!\n", 13);
-    //     HAL_Delay(1000);
-    // }
 
     // Example loop that receives data over UART and echoes it back in the form: "Received: <data>\n"
 //    uint8_t rxBuffer[128];
@@ -135,89 +74,73 @@ void sys_Run(void)
 //        }
 //    }
 
-    // while(1)
+    // float control_signal, speed;
+    // uint32_t lastProcessTime = 0;
+    // uint32_t lastLogTime = 0;
+    // uint32_t lastFastTime = 0, lastSlowTime = 0;
+    // uint8_t speed_mode = 0; // 0 -slow, 1 - fast
+    // while (1)
     // {
-    //     static uint32_t lastTestProcessTime = 0;
-    //     if (HAL_GetTick() - lastTestProcessTime >= 100)
-    //     {
-    //         lastTestProcessTime = HAL_GetTick();
-    //         test_ProcessAll();
+    //     uint32_t currentTime = HAL_GetTick();
+    //     if (currentTime - lastProcessTime < 10)
+    //         continue;
+    //     ui_Process();
+    //     lastProcessTime = currentTime;
+    //     line_Process();
+    //     line_GetDetectionResult(&line_detection_result);
+    //     printf("%f\n", line_detection_result.position);
+
+    //     tuning_Process();
+
+    //     line_params.adcThreshold = tuning_params.threshold;
+	// 	line_params.useSingleLineDetection = tuning_params.mode;
+	// 	line_SetParams(&line_params);
+    //     if(line_detection_result.lineType == LINE_NO_LINE) {
+    //     	mot_Enable(false);
+    //         mot_SetSpeed(-tuning_params.speed);
+    //         servo_SetAngle(SERVO_FRONT, 0.0f);
+    //         tuning_Stop();
+    //     } else {
+    //         if(tuning_params.motor_enabled) {
+    //             control_signal = CTRL_RunLoop_TUNING(-line_detection_result.position,
+    //                                                 tuning_params.p_coeff, 
+    //                                                 tuning_params.i_coeff, 
+    //                                                 tuning_params.d_coeff, 
+    //                                                 0.1f);
+    //             servo_SetAngle(SERVO_FRONT, control_signal);
+                
+    //             if (line_detection_result.lineType == LINE_TRIPLE_LINE_DASHED) 
+    //                 speed_mode = 1; //fast
+    //             else if (line_detection_result.lineType == LINE_TRIPLE_LINE) 
+    //                 speed_mode = 0; //slow
+                
+    //             //mot_SetSpeed(-tuning_params.speed);
+    //             if (speed_mode == 0){
+    //                 lastSlowTime = HAL_GetTick();
+    //                 if (HAL_GetTick()-lastFastTime < 200)
+    //                     speed = -(tuning_params.speed*(1 - fmin(HAL_GetTick()-lastFastTime,200)/200.0f ));
+    //                 else if (HAL_GetTick()-lastFastTime < 300)
+    //                     speed = -(tuning_params.speed*(fmin(HAL_GetTick()-lastFastTime-200,100)/100.0f));
+    //                 else 
+    //                     speed = -(tuning_params.speed);
+
+    //                 mot_SetSpeed(speed);
+    //             } else if(speed_mode == 1){
+    //                 lastFastTime = HAL_GetTick();
+    //                 if(HAL_GetTick()-lastSlowTime < 400)
+    //                     speed = -(tuning_params.speed);
+    //                 else    
+    //                     speed = -0.48f;
+    //                 mot_SetSpeed(speed);
+    //             }
+    //             mot_Enable(true);
+    //         } else {
+    //         	mot_Enable(false);
+    //             mot_SetSpeed(-tuning_params.speed);
+    //             servo_SetAngle(SERVO_FRONT, 0.0f);
+    //             CTRL_InitLoop();
+    //         }
     //     }
     // }
-
-    float control_signal, speed;
-    uint32_t lastProcessTime = 0;
-    uint32_t lastLogTime = 0;
-    uint32_t lastFastTime = 0, lastSlowTime = 0;
-    uint8_t speed_mode = 0; // 0 -slow, 1 - fast
-    while (1)
-    {
-        uint32_t currentTime = HAL_GetTick();
-        if (currentTime - lastProcessTime < 10)
-            continue;
-        ui_Process();
-        lastProcessTime = currentTime;
-        line_Process();
-        line_GetDetectionResult(&line_detection_result);
-        printf("%f\n", line_detection_result.position);
-
-        tuning_Process();
-
-        line_params.adcThreshold = tuning_params.threshold;
-		line_params.useSingleLineDetection = tuning_params.mode;
-		line_SetParams(&line_params);
-        if(line_detection_result.lineType == LINE_NO_LINE) {
-        	mot_Enable(false);
-            mot_SetSpeed(-tuning_params.speed);
-            servo_SetAngle(SERVO_FRONT, 0.0f);
-            tuning_Stop();
-        } else {
-            if(tuning_params.motor_enabled) {
-                control_signal = CTRL_RunLoop_TUNING(-line_detection_result.position,
-                                                    tuning_params.p_coeff, 
-                                                    tuning_params.i_coeff, 
-                                                    tuning_params.d_coeff, 
-                                                    0.1f);
-                servo_SetAngle(SERVO_FRONT, control_signal);
-                
-                if (line_detection_result.lineType == LINE_TRIPLE_LINE_DASHED) 
-                    speed_mode = 1; //fast
-                else if (line_detection_result.lineType == LINE_TRIPLE_LINE) 
-                    speed_mode = 0; //slow
-                
-                //mot_SetSpeed(-tuning_params.speed);
-                if (speed_mode == 0){
-                    lastSlowTime = HAL_GetTick();
-                    if (HAL_GetTick()-lastFastTime < 200)
-                        speed = -(tuning_params.speed*(1 - fmin(HAL_GetTick()-lastFastTime,200)/200.0f ));
-                    else if (HAL_GetTick()-lastFastTime < 300)
-                        speed = -(tuning_params.speed*(fmin(HAL_GetTick()-lastFastTime-200,100)/100.0f));
-                    else 
-                        speed = -(tuning_params.speed);
-
-                    mot_SetSpeed(speed);
-                } else if(speed_mode == 1){
-                    lastFastTime = HAL_GetTick();
-                    if(HAL_GetTick()-lastSlowTime < 400)
-                        speed = -(tuning_params.speed);
-                    else    
-                        speed = -0.48f;
-                    mot_SetSpeed(speed);
-                }
-                mot_Enable(true);
-            } else {
-            	mot_Enable(false);
-                mot_SetSpeed(-tuning_params.speed);
-                servo_SetAngle(SERVO_FRONT, 0.0f);
-                CTRL_InitLoop();
-            }
-        }
-    }
-}
-
-
-static void NPUCache_config(void)
-{
-    npu_cache_enable();
 }
 
