@@ -4,11 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct {
-    uint16_t adcThreshold;
-    bool useSingleLineDetection;
-} line_ParamSettingsType;
-
 typedef enum {
     LINE_NO_LINE,
     LINE_SINGLE_LINE,
@@ -22,8 +17,6 @@ typedef struct {
 } line_DetectionResultType;
 
 void line_Init();
-
-void line_SetParams(const line_ParamSettingsType* params);
 
 void line_ResetInternalState();
 

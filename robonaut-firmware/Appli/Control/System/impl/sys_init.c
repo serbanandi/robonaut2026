@@ -13,7 +13,7 @@
 #include "Servo/servo_interface.h"
 #include "Drive/drv_interface.h"
 #include "HwTest/test_interface.h"
-#include "Control/Control.h"
+#include "LineController/lc_interface.h"
 #include "LineSensor/LineSensor.h"
 #include "MicroTimer/MicroTimer.h"
 #include "LineProcessor/line_interface.h"
@@ -27,8 +27,8 @@ static drv_ControlParamsType telVar_currentDrvParams = {
     .integralLimit = 0.5f,
     .periodUs = 1000 // 1 ms
 };
-static float telVar_currentMaxPower = 0.3f;
-static uint32_t telVar_maxEncoderCps = 100000; // 100k counts per second for now, TODO: tune properly
+static float telVar_currentMaxPower = 0.8f;
+static uint32_t telVar_maxEncoderCps = 300000; // 300k counts per second for now, TODO: tune properly
 
 void sys_Init(void)
 {
@@ -40,18 +40,15 @@ void sys_Init(void)
     if (!LS_Init(&hspi4, NULL))
         Error_Handler();
 
+    tel_Init();
     ssd1306_Init();
     ui_Init();
     servo_Init();
     drv_Init(&telVar_currentDrvParams, telVar_currentMaxPower, telVar_maxEncoderCps);
     line_Init();
-    tel_Init();
-    
-    //CTRL_InitLoop();
-    //tuning_Init(&tuning_params);
-    //test_Init();
+    lc_Init();
 
-    test_Init();
+    //test_Init();
     
     _sys_RegisterTelemetryVariables();
 

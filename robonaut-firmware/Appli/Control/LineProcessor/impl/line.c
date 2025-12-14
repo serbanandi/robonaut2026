@@ -2,39 +2,21 @@
 #include "LineSensor/LineSensor.h"
 #include <stdio.h>
 #include <stdarg.h>
+#include "Telemetry/tel_interface.h"
 
 
 static line_InternalStateType currentState;
 static line_ParamSettingsType currentParams = 
 {
-    .adcThreshold = 1600,
-    .useSingleLineDetection = true,
+    .adcThreshold = 900,
+    .useSingleLineDetection = false,
 };
 
 static unsigned int tripleLineDetectionTimeMs = 0;
 static unsigned int lastLineDetectionTime = 0;
 static float lastDetectedLinePos = 0.0f;
-
-
-void line_Init() 
-{
-    line_ResetInternalState();
-}
-
-
-void line_SetParams(const line_ParamSettingsType* params) 
-{
-    currentParams = *params;
-    //line_ResetInternalState();
-}
-
-
-void line_ResetInternalState() 
-{
-    currentState = LINE_STATE_NO_LINE;
-    lastLineDetectionTime = 0;
-    tripleLineDetectionTimeMs = 0;
-}
+static bool logLineAdcValues = false;
+static bool logLineThresholds = false;
 
 
 static float _line_RunLineDetectionOnPartialData(int startingIndex, int length, uint16_t adcValues[32])
@@ -152,22 +134,55 @@ static float _line_DetectMainLine(uint16_t adcValues[32], line_DetectionChunkTyp
 }
 
 
+void line_Init() 
+{
+    line_ResetInternalState();
+    tel_RegisterRW(&currentParams.adcThreshold, TEL_UINT16, "line_adcThreshold", 1000);
+    tel_RegisterRW(&currentParams.useSingleLineDetection, TEL_UINT8, "line_singleLineMode", 1000);
+    tel_RegisterRW(&logLineAdcValues, TEL_UINT8, "line_logAdcValues", 1000);
+    tel_RegisterRW(&logLineThresholds, TEL_UINT8, "line_logThresholds", 1000);
+}
+
+
+void line_SetParams(const line_ParamSettingsType* params) 
+{
+    currentParams = *params;
+}
+
+
+void line_ResetInternalState() 
+{
+    currentState = LINE_STATE_NO_LINE;
+    lastLineDetectionTime = 0;
+    tripleLineDetectionTimeMs = 0;
+}
+
 void line_Process()
 {
     LS_Process();
     LS_ADC_Values_Type adcValues;
     LS_GetADCValues(&adcValues);
 
-    // LS_LED_Values_Type led_values;
-    // printf("\n\nLine Sensor ADC Values:\n ");
-    // for (int i = 0; i < 32; i++)
-    // {
-    //     printf("%d ", adcValues.front_adc[i]);
-    //     led_values.front_led[i] = !(adcValues.front_adc[i] < currentParams.adcThreshold);
-    // }
-    // LS_SetFbLEDs(&led_values);
-
     _line_ShowFbLeds(adcValues.front_adc);
+    static char logBuffer[500];
+    if (logLineAdcValues)
+    {
+        int len = 0;
+        for (int i = 0; i < 32; i++)
+        {
+            len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%04u ", adcValues.front_adc[i]);
+        }
+        tel_Log(TEL_LOG_INFO, "Line ADCs: %s", logBuffer);
+    }
+    if (logLineThresholds)
+    {
+        int len = 0;
+        for (int i = 0; i < 32; i++)
+        {
+            len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%d ", adcValues.front_adc[i] > currentParams.adcThreshold);
+        }
+        tel_Log(TEL_LOG_INFO, "Line Thresholds: %s", logBuffer);
+    }
 
     line_DetectionChunkType lineChunks[3];
     int detectedLineChunkNum = _line_DetectLineChunks(lineChunks, adcValues.front_adc);

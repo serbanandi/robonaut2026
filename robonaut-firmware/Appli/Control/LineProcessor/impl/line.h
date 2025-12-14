@@ -3,6 +3,11 @@
 
 #include "../line_interface.h"
 
+typedef struct {
+    uint16_t adcThreshold;
+    bool useSingleLineDetection;
+} line_ParamSettingsType;
+
 typedef enum 
 {
     LINE_STATE_NO_LINE,
