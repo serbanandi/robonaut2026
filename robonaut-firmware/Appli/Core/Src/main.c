@@ -123,6 +123,7 @@ int main(void)
   MX_TIM17_Init();
   MX_TIM14_Init();
   MX_TIM7_Init();
+  MX_TIM18_Init();
   SystemIsolation_Config();
   /* USER CODE BEGIN 2 */
 
