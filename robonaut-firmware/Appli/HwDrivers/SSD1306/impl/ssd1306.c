@@ -137,7 +137,7 @@ void ssd1306_Init(void) {
     
     // Flush buffer to screen
     ssd1306_UpdateScreen();
-    ssd1306_WaitForScreenUpdateCplt();
+    //ssd1306_WaitForScreenUpdateCplt();
     
     // Set default values for screen object
     SSD1306.CurrentX = 0;

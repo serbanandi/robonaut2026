@@ -148,6 +148,8 @@ void Error_Handler(void);
 #define _LINE_LED_OE_GPIO_Port GPIOO
 #define LINE_INF_LE_Pin GPIO_PIN_2
 #define LINE_INF_LE_GPIO_Port GPIOO
+#define IMU_CS_Pin GPIO_PIN_7
+#define IMU_CS_GPIO_Port GPIOG
 #define _AD_CS3_Pin GPIO_PIN_6
 #define _AD_CS3_GPIO_Port GPIOG
 #define GEN_PIN2_Pin GPIO_PIN_8
