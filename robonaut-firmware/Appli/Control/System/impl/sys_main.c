@@ -56,7 +56,6 @@ void sys_Run(void)
     // }
 
     float control_signal, speed;
-    uint32_t lastProcessTime = 0;
     uint32_t lastFastTime = 0, lastSlowTime = 0;
     uint8_t speed_mode = 0; // 0 -slow, 1 - fast
     while (1)
@@ -78,6 +77,7 @@ void sys_Run(void)
             MAGIC_ENABLED = false;
         }
 
+        static uint32_t lastProcessTime = 0;
         uint32_t currentTime = HAL_GetTick();
         if (currentTime - lastProcessTime < 10)
             continue;

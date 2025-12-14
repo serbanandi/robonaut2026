@@ -172,7 +172,7 @@ void line_Process()
         {
             len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%04u ", adcValues.front_adc[i]);
         }
-        tel_Log(TEL_LOG_INFO, "Line ADCs: %s", logBuffer);
+        tel_Log(TEL_LOG_INFO, "%s", logBuffer);
     }
     if (logLineThresholds)
     {
@@ -181,7 +181,7 @@ void line_Process()
         {
             len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%d ", adcValues.front_adc[i] > currentParams.adcThreshold);
         }
-        tel_Log(TEL_LOG_INFO, "Line Thresholds: %s", logBuffer);
+        tel_Log(TEL_LOG_INFO, "%s", logBuffer);
     }
 
     line_DetectionChunkType lineChunks[3];
