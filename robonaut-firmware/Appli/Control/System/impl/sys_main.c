@@ -27,10 +27,10 @@ line_DetectionResultType line_detection_result;
 void sys_Run(void)
 {
     static uint32_t encoderPos;
-    static int32_t encoderSpeed;
+    static float encoderSpeed;
 
     tel_RegisterR(&encoderPos, TEL_UINT32, "Encoder_Position", 100);
-    tel_RegisterR(&encoderSpeed, TEL_INT32, "Encoder_Speed", 100);
+    tel_RegisterR(&encoderSpeed, TEL_FLOAT, "Encoder_Speed", 100);
 
     tel_Log(TEL_LOG_INFO, "Entering main loop...");
 
@@ -40,6 +40,7 @@ void sys_Run(void)
         encoderPos = drv_GetEncoderCount();
         encoderSpeed = drv_GetEncoderSpeed();
         
+        test_ProcessAll();
         tel_Process();
 
         static uint32_t lastBlinkTime = 0;

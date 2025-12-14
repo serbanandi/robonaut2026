@@ -7,4 +7,6 @@
 
 void _drv_TimerInterruptHandler(void*);
 
+void _drv_HandleSpeedControl();
+
 #endif // DRV_H

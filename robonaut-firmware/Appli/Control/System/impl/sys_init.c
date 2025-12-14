@@ -21,13 +21,14 @@
 #include "Telemetry/tel_interface.h"
 
 static drv_ControlParamsType telVar_currentDrvParams = {
-    .P = 0.1f,
-    .I = 0.01f,
-    .D = 0.005f,
-    .integralLimit = 10.0f,
+    .P = 1.6f,
+    .I = 3.00f,
+    .D = 0.00f,
+    .integralLimit = 0.5f,
     .periodUs = 1000 // 1 ms
 };
-static float telVar_currentMaxPower = 0.5f;
+static float telVar_currentMaxPower = 0.3f;
+static uint32_t telVar_maxEncoderCps = 100000; // 100k counts per second for now, TODO: tune properly
 
 void sys_Init(void)
 {
@@ -42,7 +43,7 @@ void sys_Init(void)
     ssd1306_Init();
     ui_Init();
     servo_Init();
-    drv_Init(&telVar_currentDrvParams, telVar_currentMaxPower);
+    drv_Init(&telVar_currentDrvParams, telVar_currentMaxPower, telVar_maxEncoderCps);
     line_Init();
     tel_Init();
     
@@ -50,14 +51,16 @@ void sys_Init(void)
     //tuning_Init(&tuning_params);
     //test_Init();
 
+    test_Init();
+    
+    _sys_RegisterTelemetryVariables();
+
+    HAL_Delay(500); // Wait for everything to stabilize
     ssd1306_Fill(0);
     ssd1306_SetCursor(0, 0);
     ssd1306_WriteString("System Init Success", Font_6x8, 0);
     ssd1306_UpdateScreen();
-
     tel_Log(TEL_LOG_INFO, "System initialized successfully.");
-
-    _sys_RegisterTelemetryVariables();
 
     while (BSP_PB_GetState(BUTTON_USER) != GPIO_PIN_SET) { }
 }
@@ -70,12 +73,14 @@ void _sys_RegisterTelemetryVariables(void)
     tel_RegisterRW(&telVar_currentDrvParams.integralLimit, TEL_FLOAT, "drv_integralLimit", 1000);
     tel_RegisterRW(&telVar_currentDrvParams.periodUs, TEL_UINT32, "drv_periodUs", 1000);
     tel_RegisterRW(&telVar_currentMaxPower, TEL_FLOAT, "drv_maxPower", 1000);
+    tel_RegisterRW(&telVar_maxEncoderCps, TEL_UINT32, "drv_maxEncoderCps", 1000);
 }
 
 void _sys_HandleParamTuning(void)
 {
     drv_SetControlParams(&telVar_currentDrvParams);
     drv_SetMaxPower(telVar_currentMaxPower);
+    drv_SetMaxEncoderCps(telVar_maxEncoderCps);
 }
 
 void _sys_NPUCache_config(void)

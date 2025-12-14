@@ -15,8 +15,10 @@ typedef struct
 /**
  * @brief Initialize the drive module.
  * @param controlParams Pointer to the control parameters structure.
+ * @param maxPower The maximum power level for the motor, in the range [0.0, 1.0].
+ * @param maxEncoderCps The maximum encoder counts per second for speed calculations.
  */
-void drv_Init(const drv_ControlParamsType *controlParams, float maxPower);
+void drv_Init(const drv_ControlParamsType *controlParams, float maxPower, uint32_t maxEncoderCps);
 
 /**
  * @brief Enable or disable the drive system.
@@ -43,11 +45,10 @@ void drv_SetMaxPower(float maxPower);
 void drv_SetControlParams(const drv_ControlParamsType *controlParams);
 
 /**
- * @brief Get the current control parameters and maximum power level.
- * @param controlParams Pointer to store the current control parameters.
- * @param maxPower Pointer to store the current maximum power level.
+ * @brief Set the maximum encoder counts per second for speed calculations.
+ * @param maxEncoderCps The maximum encoder counts per second.
  */
-void drv_GetAllParams(drv_ControlParamsType *controlParams, float *maxPower);
+void drv_SetMaxEncoderCps(uint32_t maxEncoderCps);
 
 /**
  * @brief Get the current encoder count.
@@ -57,8 +58,8 @@ uint32_t drv_GetEncoderCount(void);
 
 /**
  * @brief Get the current encoder speed.
- * @return The current encoder speed in counts per second.
+ * @return The current encoder speed (adjusted according to maxEncoderCps) between [-1.0, 1.0].
  */
-int32_t drv_GetEncoderSpeed(void);
+float drv_GetEncoderSpeed(void);
 
 #endif // DRV_INTERFACE_H

@@ -7,7 +7,7 @@ static uint32_t minPulseWidth = 0;
 static uint32_t maxPulseWidth = 0;
 static uint32_t middlePulseWidth = 0;
 static uint32_t minMaxPulseWidthDiff = 0;
-static float DRV_MAX_PWR = 0.5f; // Maximum power level
+static float _drv_maxPower = 0.5f; // Maximum power level
 
 void _drv_MotorInit(void) 
 {
@@ -43,10 +43,10 @@ void _drv_EnableMotor(bool enable)
 
 void _drv_SetPower(float power) 
 {
-    if (power < -DRV_MAX_PWR) power = -DRV_MAX_PWR;
-    if (power >  DRV_MAX_PWR) power =  DRV_MAX_PWR;
+    if (power < -_drv_maxPower) power = -_drv_maxPower;
+    if (power >  _drv_maxPower) power =  _drv_maxPower;
 
-    uint32_t pulseWidth1 = middlePulseWidth + (int32_t)(power * minMaxPulseWidthDiff);
+    uint32_t pulseWidth1 = middlePulseWidth + (int32_t)(-power * minMaxPulseWidthDiff);
     uint32_t pulseWidth2 = motorTimerPeriod - pulseWidth1;
 
     __HAL_TIM_SET_COMPARE(DRV_PWM_TIMER, DRV_PWM1_CHANNEL, pulseWidth1);
@@ -57,10 +57,5 @@ void drv_SetMaxPower(float maxPower)
 {
     if (maxPower < 0.0f) maxPower = 0.0f;
     if (maxPower > 1.0f) maxPower = 1.0f;
-    DRV_MAX_PWR = maxPower;
-}
-
-void _drv_GetMaxPower(float *maxPower) 
-{
-    *maxPower = DRV_MAX_PWR;
+    _drv_maxPower = maxPower;
 }
