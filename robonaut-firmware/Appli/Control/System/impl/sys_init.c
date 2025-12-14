@@ -19,6 +19,7 @@
 #include "LineProcessor/line_interface.h"
 #include "ControllerTuning/tuning_interface.h"
 #include "Telemetry/tel_interface.h"
+#include "IMU/imu_interface.h"
 
 static drv_ControlParamsType telVar_currentDrvParams = {
     .P = 1.6f,
@@ -29,6 +30,8 @@ static drv_ControlParamsType telVar_currentDrvParams = {
 };
 static float telVar_currentMaxPower = 0.8f;
 static uint32_t telVar_maxEncoderCps = 300000; // 300k counts per second for now, TODO: tune properly
+
+static imu_Imu _sys_imuInstance;
 
 void sys_Init(void)
 {
@@ -46,7 +49,12 @@ void sys_Init(void)
     servo_Init();
     drv_Init(&telVar_currentDrvParams, telVar_currentMaxPower, telVar_maxEncoderCps);
     line_Init();
-    lc_Init();
+    // imu_init(&_sys_imuInstance, &hspi2, IMU_CS_GPIO_Port, IMU_CS_Pin, SPI2_IRQn, &htim18);
+    // imu_setDefaultSettings(&_sys_imuInstance);
+    
+    //CTRL_InitLoop();
+    //tuning_Init(&tuning_params);
+    //test_Init();
 
     //test_Init();
     
