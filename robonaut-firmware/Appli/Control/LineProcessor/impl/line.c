@@ -96,6 +96,15 @@ static int _line_DetectLineChunks(line_DetectionChunkType chunks[4], uint16_t ad
     return chunkNum;
 }
 
+static bool _line_isFullBlack(uint16_t adcValues[32])
+{
+	for (int p = 0; p < 32; p++)
+	{
+		if(adcValues[p] < adcThreshold) return false;
+	}
+	return true;
+}
+
 static void _line_ShowFbLeds(uint16_t adcValues[32])
 {
     LS_LED_Values_Type led_values;
@@ -415,6 +424,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
 
     return (line_DetectionResultType){
         .detectedLinePos = lastDetectedLinePos,
-        .lineDetected = (currentState != LINE_STATE_NO_LINE)
+        .lineDetected = (currentState != LINE_STATE_NO_LINE),
+		.allBlack = _line_isFullBlack(adcValues.front_adc)
     };
 }

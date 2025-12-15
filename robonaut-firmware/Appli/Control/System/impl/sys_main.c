@@ -20,36 +20,76 @@
 #include <stdarg.h>
 
 bool MAGIC_ENABLED = false;
+bool doingYturn = false;
+int8_t Ydir = 0;
 float slowSpeed = 0.2f;
 float fastSpeed = 0.7f;
 uint8_t lineSplitIndex = 0;
+uint8_t pathIndex = 0;
 float P_GAIN = 0.2f;
 float I_GAIN = 0.005f;
 float D_GAIN = 0.0f;
+bool next = false;
+uint32_t encoderStart = 0, encoderTarget = 0, encoderDiff=95000;
 
 static line_SplitDirectionType lineSelectionFunc(int) {
-    static line_SplitDirectionType lineSplitDirections[] = {
-        LINE_SPLIT_RIGHT, 
-        LINE_SPLIT_RIGHT, 
-        LINE_SPLIT_STRAIGHT, 
-        LINE_SPLIT_RIGHT, 
-        LINE_SPLIT_STRAIGHT, 
-        LINE_SPLIT_RIGHT, 
-        LINE_SPLIT_STRAIGHT, 
-        LINE_SPLIT_RIGHT, 
-        LINE_SPLIT_LEFT, 
-        LINE_SPLIT_RIGHT};
+    static line_SplitDirectionType path1[] = {
+			LINE_SPLIT_STRAIGHT,	//F
+			LINE_SPLIT_STRAIGHT,	//G
+			LINE_SPLIT_STRAIGHT,	//J
+	};
+    static line_SplitDirectionType path2[] = {
+			LINE_SPLIT_RIGHT,		//F
+			LINE_SPLIT_RIGHT,		//D
+			LINE_SPLIT_RIGHT,		//C
+			LINE_SPLIT_RIGHT,		//E
+			LINE_SPLIT_STRAIGHT,	//F
+			LINE_SPLIT_STRAIGHT,	//G
+			LINE_SPLIT_STRAIGHT,	//J
+	};
+    static line_SplitDirectionType path3[] = {
+			LINE_SPLIT_STRAIGHT,	//F
+			LINE_SPLIT_RIGHT,		//G
+			LINE_SPLIT_RIGHT,		//K
+			LINE_SPLIT_RIGHT,		//N
+			LINE_SPLIT_RIGHT,		//M
+			LINE_SPLIT_STRAIGHT,	//I
+			LINE_SPLIT_STRAIGHT,	//J
+	};
+    static line_SplitDirectionType path4[] = {
+			LINE_SPLIT_STRAIGHT,	//F
+			LINE_SPLIT_STRAIGHT,	//G
+			LINE_SPLIT_RIGHT,		//J
+			LINE_SPLIT_STRAIGHT,	//L
+			LINE_SPLIT_RIGHT,		//R
+			LINE_SPLIT_RIGHT,		//T
+			LINE_SPLIT_STRAIGHT,	//Q
+			LINE_SPLIT_RIGHT,		//M
+			LINE_SPLIT_STRAIGHT,	//I
+			LINE_SPLIT_STRAIGHT,	//J
+	};
+    static line_SplitDirectionType path5[] = {
+			LINE_SPLIT_RIGHT,		//F
+			LINE_SPLIT_STRAIGHT,	//D
+			LINE_SPLIT_RIGHT,		//A
+			LINE_SPLIT_STRAIGHT,	//B
+			LINE_SPLIT_STRAIGHT,	//E
+			LINE_SPLIT_STRAIGHT,	//H
+			LINE_SPLIT_RIGHT,		//L
+			LINE_SPLIT_RIGHT,		//O
+			LINE_SPLIT_RIGHT,		//K
+			LINE_SPLIT_STRAIGHT,	//J
+	};
+	static line_SplitDirectionType* lineSplitDirections[] = {path1, path2, path3, path4, path5};
 
-    if (lineSplitIndex >= sizeof(lineSplitDirections)/sizeof(lineSplitDirections[0])) {
-        lineSplitIndex = 0;
-    }
-    return lineSplitDirections[lineSplitIndex++];
+    return lineSplitDirections[pathIndex][lineSplitIndex++];
 }
 
 void sys_Run(void)
 {
     static uint32_t encoderPos;
     static float encoderSpeed;
+    static bool targetReached;
 
     tel_RegisterR(&encoderPos, TEL_UINT32, "sys_encoderPos", 100);
     tel_RegisterR(&encoderSpeed, TEL_FLOAT, "sys_encoderSpeed", 100);
@@ -59,6 +99,11 @@ void sys_Run(void)
     tel_RegisterRW(&P_GAIN, TEL_FLOAT, "sys_P", 400);
     tel_RegisterRW(&I_GAIN, TEL_FLOAT, "sys_I", 400);
     tel_RegisterRW(&D_GAIN, TEL_FLOAT, "sys_D", 400);
+    tel_RegisterRW(&next, TEL_UINT8, "sys_next", 400);
+    tel_RegisterR(&doingYturn, TEL_UINT8, "sys_doingYturn", 400);
+    tel_RegisterRW(&pathIndex, TEL_UINT8, "sys_pathIndex", 400);
+    tel_RegisterRW(&lineSplitIndex, TEL_UINT8, "sys_lineSplitIndex", 400);
+    tel_RegisterRW(&encoderDiff, TEL_UINT32, "sys_encoderDiff", 400);
 
 
     tel_Log(TEL_LOG_INFO, "Entering main loop...");
@@ -105,16 +150,44 @@ void sys_Run(void)
             continue;
         lastProcessTime = currentTime;
         line_DetectionResultType lineResult = line_Process(lineSelectionFunc);
-            if(MAGIC_ENABLED) {
+        	if (doingYturn) {
+        		targetReached = fabs(encoderPos - encoderTarget) < 750;
+        		if (Ydir==1 && targetReached){ // going back and target reached
+        			Ydir = -1;
+        			encoderTarget = encoderStart;
+        			tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going forward", encoderPos);
+        		} else if (Ydir == -1 && targetReached) { //going forward and target reached
+        			Ydir = 0;
+        			doingYturn = false;
+        			tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going back to line", encoderPos);
+        		}
+        		servo_SetAngle(SERVO_FRONT, Ydir);
+        		drv_SetSpeed(-Ydir*slowSpeed);
+
+
+        	} else if(MAGIC_ENABLED && !lineResult.allBlack) { //motor enabled and on line - follow
                 float control_signal = lc_Compute(-lineResult.detectedLinePos,
                                                     P_GAIN, //P 
                                                     I_GAIN, //I
-                                                    D_GAIN,  //D
+                                                    D_GAIN, //D
                                                     0.1f);
                 servo_SetAngle(SERVO_FRONT, control_signal);
                 
                 drv_SetSpeed(slowSpeed);
                 drv_Enable(true);
+            } else if  (MAGIC_ENABLED && lineResult.allBlack){ //finished sequence
+            	drv_Enable(false); //stop
+				pathIndex++;
+				lineSplitIndex = 0;
+
+            	encoderStart = encoderPos;
+            	encoderTarget = encoderPos-encoderDiff;
+
+            	doingYturn = true;
+            	Ydir=1;
+    			tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going backward", encoderPos);
+    			drv_Enable(true);
+
             } else {
             	// drv_Enable(false);
                 drv_SetSpeed(0.0f);
