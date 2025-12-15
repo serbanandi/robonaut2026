@@ -4,24 +4,23 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef enum {
-    LINE_NO_LINE,
-    LINE_SINGLE_LINE,
-    LINE_TRIPLE_LINE,
-    LINE_TRIPLE_LINE_DASHED
-} line_DetectedLineType;
-
 typedef struct {
-    line_DetectedLineType lineType;
-    float position;
+    float detectedLinePos;
+    bool lineDetected;
 } line_DetectionResultType;
+
+typedef enum {
+    LINE_SPLIT_RIGHT = 0,
+    LINE_SPLIT_STRAIGHT = 1,
+    LINE_SPLIT_LEFT = 2
+} line_SplitDirectionType;
+
+typedef line_SplitDirectionType (*line_ChooseLineFunc)(int lineCount);
 
 void line_Init();
 
 void line_ResetInternalState();
 
-void line_Process();
-
-void line_GetDetectionResult(line_DetectionResultType* result);
+line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc);
 
 #endif // LINE_INTERFACE_H

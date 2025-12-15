@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define DRV_ENCODER_COUNTS_PER_M 70000 // Number of encoder counts per meter of travel
+#define DRV_ENCODER_COUNTS_PER_CM (DRV_ENCODER_COUNTS_PER_M / 100)
+
 // Control parameters structure
 typedef struct
 {

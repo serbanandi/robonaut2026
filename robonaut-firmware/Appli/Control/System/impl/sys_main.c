@@ -19,10 +19,32 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-line_DetectionResultType line_detection_result;
 bool MAGIC_ENABLED = false;
-float slowSpeed = 0.3f;
+float slowSpeed = 0.2f;
 float fastSpeed = 0.7f;
+uint8_t lineSplitIndex = 0;
+float P_GAIN = 0.2f;
+float I_GAIN = 0.005f;
+float D_GAIN = 0.0f;
+
+static line_SplitDirectionType lineSelectionFunc(int) {
+    static line_SplitDirectionType lineSplitDirections[] = {
+        LINE_SPLIT_RIGHT, 
+        LINE_SPLIT_RIGHT, 
+        LINE_SPLIT_STRAIGHT, 
+        LINE_SPLIT_RIGHT, 
+        LINE_SPLIT_STRAIGHT, 
+        LINE_SPLIT_RIGHT, 
+        LINE_SPLIT_STRAIGHT, 
+        LINE_SPLIT_RIGHT, 
+        LINE_SPLIT_LEFT, 
+        LINE_SPLIT_RIGHT};
+
+    if (lineSplitIndex >= sizeof(lineSplitDirections)/sizeof(lineSplitDirections[0])) {
+        lineSplitIndex = 0;
+    }
+    return lineSplitDirections[lineSplitIndex++];
+}
 
 void sys_Run(void)
 {
@@ -34,6 +56,9 @@ void sys_Run(void)
     tel_RegisterRW(&MAGIC_ENABLED, TEL_UINT8, "sys_ENABLE", 400);
     tel_RegisterRW(&slowSpeed, TEL_FLOAT, "sys_slowSpeed", 400);
     tel_RegisterRW(&fastSpeed, TEL_FLOAT, "sys_fastSpeed", 400);
+    tel_RegisterRW(&P_GAIN, TEL_FLOAT, "sys_P", 400);
+    tel_RegisterRW(&I_GAIN, TEL_FLOAT, "sys_I", 400);
+    tel_RegisterRW(&D_GAIN, TEL_FLOAT, "sys_D", 400);
 
 
     tel_Log(TEL_LOG_INFO, "Entering main loop...");
@@ -55,9 +80,6 @@ void sys_Run(void)
     //     }
     // }
 
-    float control_signal, speed;
-    uint32_t lastFastTime = 0, lastSlowTime = 0;
-    uint8_t speed_mode = 0; // 0 -slow, 1 - fast
     while (1)
     {
         _sys_HandleParamTuning();
@@ -82,54 +104,25 @@ void sys_Run(void)
         if (currentTime - lastProcessTime < 10)
             continue;
         lastProcessTime = currentTime;
-        line_Process();
-        line_GetDetectionResult(&line_detection_result);
-        
-        if(line_detection_result.lineType == LINE_NO_LINE) {
-        	drv_Enable(false);
-            drv_SetSpeed(slowSpeed);
-            servo_SetAngle(SERVO_FRONT, 0.0f);
-        } else {
+        line_DetectionResultType lineResult = line_Process(lineSelectionFunc);
             if(MAGIC_ENABLED) {
-                control_signal = lc_Compute(-line_detection_result.position,
-                                                    0.105f, //P 
-                                                    0.005f, //I
-                                                    0.32f,  //D
+                float control_signal = lc_Compute(-lineResult.detectedLinePos,
+                                                    P_GAIN, //P 
+                                                    I_GAIN, //I
+                                                    D_GAIN,  //D
                                                     0.1f);
                 servo_SetAngle(SERVO_FRONT, control_signal);
                 
-                if (line_detection_result.lineType == LINE_TRIPLE_LINE_DASHED) 
-                    speed_mode = 1; //fast
-                else if (line_detection_result.lineType == LINE_TRIPLE_LINE) 
-                    speed_mode = 0; //slow
-                
-                //mot_SetSpeed(-tuning_params.speed);
-                if (speed_mode == 0){
-                    lastSlowTime = HAL_GetTick();
-                    if (HAL_GetTick()-lastFastTime < 200)
-                        speed = slowSpeed*(1 - fmin(HAL_GetTick()-lastFastTime,200)/200.0f );
-                    else if (HAL_GetTick()-lastFastTime < 300)
-                        speed = slowSpeed*(fmin(HAL_GetTick()-lastFastTime-200,100)/100.0f);
-                    else 
-                        speed = slowSpeed;
-
-                    drv_SetSpeed(speed);
-                } else if(speed_mode == 1){
-                    lastFastTime = HAL_GetTick();
-                    if(HAL_GetTick()-lastSlowTime < 400)
-                        speed = slowSpeed;
-                    else    
-                        speed = fastSpeed;
-                    drv_SetSpeed(speed);
-                }
+                drv_SetSpeed(slowSpeed);
                 drv_Enable(true);
             } else {
-            	drv_Enable(false);
-                drv_SetSpeed(slowSpeed);
+            	// drv_Enable(false);
+                drv_SetSpeed(0.0f);
                 servo_SetAngle(SERVO_FRONT, 0.0f);
                 lc_Init();
+                lineSplitIndex = 0;
             }
-        }
+        //}
     }
 }
 
