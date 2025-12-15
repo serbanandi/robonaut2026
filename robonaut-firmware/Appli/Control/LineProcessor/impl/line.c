@@ -369,7 +369,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
 
             if (detectedLineChunkNum == lastLineChunkNum)
             {
-                if (currentEncoderCnt - initialTypeDetectionEncoderCnt > 1 * DRV_ENCODER_COUNTS_PER_CM)
+                if (currentEncoderCnt - initialTypeDetectionEncoderCnt > 0.5 * (float)DRV_ENCODER_COUNTS_PER_CM)
                 {
                     tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
                     if (detectedLineChunkNum == 4 || detectedLineChunkNum == 0)
@@ -412,10 +412,10 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
                 lastDetectedLinePos = _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, true);
             }
 
-            if (currentEncoderCnt - currentStateStartEncoderCnt > 40 * DRV_ENCODER_COUNTS_PER_CM)
+            if (currentEncoderCnt - currentStateStartEncoderCnt > 60 * DRV_ENCODER_COUNTS_PER_CM)
             {
                 currentState = LINE_STATE_SINGLE_LINE;
-                tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
+                tel_Log(TEL_LOG_DEBUG, "%u %d", currentEncoderCnt, detectedLineChunkNum);
                 tel_Log(TEL_LOG_INFO, "Exiting HANDLE_LINE_SPLIT state after some distance traveled");
             }
             break;

@@ -90,6 +90,7 @@ void sys_Run(void)
     static uint32_t encoderPos;
     static float encoderSpeed;
     static bool targetReached;
+    static uint8_t allblack_ctr = 0;
 
     tel_RegisterR(&encoderPos, TEL_UINT32, "sys_encoderPos", 100);
     tel_RegisterR(&encoderSpeed, TEL_FLOAT, "sys_encoderSpeed", 100);
@@ -166,7 +167,8 @@ void sys_Run(void)
 
 
         	} else if(MAGIC_ENABLED && !lineResult.allBlack) { //motor enabled and on line - follow
-                float control_signal = lc_Compute(-lineResult.detectedLinePos,
+        		allblack_ctr = 0;
+        		float control_signal = lc_Compute(-lineResult.detectedLinePos,
                                                     P_GAIN, //P 
                                                     I_GAIN, //I
                                                     D_GAIN, //D
@@ -176,6 +178,9 @@ void sys_Run(void)
                 drv_SetSpeed(slowSpeed);
                 drv_Enable(true);
             } else if  (MAGIC_ENABLED && lineResult.allBlack){ //finished sequence
+            	allblack_ctr++;
+
+            	if (allblack_ctr<5) continue;
             	drv_Enable(false); //stop
 				pathIndex++;
 				lineSplitIndex = 0;
