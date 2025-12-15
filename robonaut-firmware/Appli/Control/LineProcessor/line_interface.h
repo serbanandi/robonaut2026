@@ -15,7 +15,12 @@ typedef enum {
     LINE_SPLIT_LEFT = 2
 } line_SplitDirectionType;
 
-typedef line_SplitDirectionType (*line_ChooseLineFunc)(int lineCount);
+typedef struct {
+    line_SplitDirectionType splitDirection;
+    int lineOutCount;
+} line_SplitInfoType;
+
+typedef line_SplitInfoType (*line_ChooseLineFunc)(int lineCount);
 
 void line_Init();
 

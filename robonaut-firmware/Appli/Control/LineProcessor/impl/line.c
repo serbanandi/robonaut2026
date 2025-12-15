@@ -7,7 +7,7 @@
 #include "Drive/drv_interface.h"
 
 static line_InternalStateType currentState;
-static uint16_t adcThreshold = 850;
+static uint16_t adcThreshold = 800;
 
 static bool logLineAdcValues = false;
 static bool logLineThresholds = false;
@@ -17,7 +17,7 @@ static uint32_t lastTypeDetectionEncoderCnt = 0;
 static uint32_t currentStateStartEncoderCnt = 0;
 static uint32_t initialTypeDetectionEncoderCnt = 0;
 static uint8_t lastLineChunkNum = 0;
-static uint8_t selectedSplitLineIndex = 0;
+static line_SplitInfoType selectedSplitInfo = {0};
 static float lastDetectedLinePos = 0.0f;
 
 static uint8_t lastDetectedChunkNum = 0;
@@ -118,42 +118,71 @@ static float _line_DetectMainLine(uint16_t adcValues[32], line_DetectionChunkTyp
         selectedChunk = 0;
     }
 
-    if (lineChunkNum == 2 )
+    float midPos[4];
+    for (int i = 0; i < lineChunkNum; i++)
     {
-        float midPos[4];
-        for (int i = 0; i < lineChunkNum; i++)
+        midPos[i] = (lineChunks[i].startPos + lineChunks[i].endPos - 31) * 0.5f;
+    }
+    int closestChunk = 0;
+    float closestDist = fabs(midPos[0] - lastDetectedLinePos);
+    for (int i = 1; i < lineChunkNum; i++)
+    {
+        float dist = fabs(midPos[i] - lastDetectedLinePos);
+        if (dist < closestDist)
         {
-            midPos[i] = (lineChunks[i].startPos + lineChunks[i].endPos - 31) * 0.5f;
+            closestDist = dist;
+            closestChunk = i;
         }
-        int closestChunk = 0;
-        float closestDist = fabs(midPos[0] - lastDetectedLinePos);
-        for (int i = 1; i < lineChunkNum; i++)
+    }
+
+    if (useSelectedSplitLineIdx)
+    {
+        if (selectedSplitInfo.splitDirection == LINE_SPLIT_RIGHT)
         {
-            float dist = fabs(midPos[i] - lastDetectedLinePos);
-            if (dist < closestDist)
+            selectedChunk = 0;
+        }
+        else if (selectedSplitInfo.splitDirection == LINE_SPLIT_STRAIGHT)
+        {
+            if (selectedSplitInfo.lineOutCount == 3)
             {
-                closestDist = dist;
-                closestChunk = i;
+                if (lineChunkNum == 3)
+                {
+                    selectedChunk = 1;
+                }
+                else
+                {
+                    selectedChunk = closestChunk;
+                }
+            }
+            else
+            {
+                selectedChunk = lineChunkNum - 1;
             }
         }
-        selectedChunk = closestChunk;
-    }
-    else if (lineChunkNum == 3)
-    {
-        if (useSelectedSplitLineIdx)
+        else if (selectedSplitInfo.splitDirection == LINE_SPLIT_LEFT)
         {
-            selectedChunk = selectedSplitLineIndex;
-        }
-        else 
-        {
-            selectedChunk = 1; // Middle line by default
+            selectedChunk = lineChunkNum - 1;
         }
     }
-    else if (lineChunkNum == 4)
+    else
     {
-    	int start = fmax(lineChunks[1].startPos - 1, 0);
-    	int length = fmin(lineChunks[2].endPos + 1, 31) - start + 1;
-        return _line_RunLineDetectionOnPartialData(start, length, adcValues);
+        for (int i = 0; i < lineChunkNum; i++)
+        {
+            if (lineChunks[i].endPos - lineChunks[i].startPos > 3)
+            {
+                return lastDetectedLinePos;
+            }
+        }
+        if (lineChunkNum == 4)
+        {
+            int start = fmax(lineChunks[1].startPos - 1, 0);
+            int length = fmin(lineChunks[2].endPos + 1, 31) - start + 1;
+            return _line_RunLineDetectionOnPartialData(start, length, adcValues);
+        }
+        else
+        {
+            selectedChunk = closestChunk;
+        }
     }
     int start = fmax(lineChunks[selectedChunk].startPos - 1, 0);
     int length = fmin(lineChunks[selectedChunk].endPos + 1, 31) - start + 1;
@@ -266,20 +295,20 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
                     lastTypeDetectionEncoderCnt = currentEncoderCnt;
                     tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
                     tel_Log(TEL_LOG_INFO, "Quad line detected");
-                    selectedSplitLineIndex = chooseLineFunc ? chooseLineFunc(detectedLineChunkNum) : 0;
-                    switch (selectedSplitLineIndex)
+                    selectedSplitInfo = chooseLineFunc(detectedLineChunkNum);
+                    switch (selectedSplitInfo.splitDirection)
                     {
                         case LINE_SPLIT_LEFT:
-                            tel_Log(TEL_LOG_INFO, "Choosing LEFT line");
+                            tel_Log(TEL_LOG_INFO, "Choosing LEFT line, out count: %d", selectedSplitInfo.lineOutCount);
                             break;
                         case LINE_SPLIT_STRAIGHT:
-                            tel_Log(TEL_LOG_INFO, "Choosing STRAIGHT line");
+                            tel_Log(TEL_LOG_INFO, "Choosing STRAIGHT line, out count: %d", selectedSplitInfo.lineOutCount);
                             break;
                         case LINE_SPLIT_RIGHT:
-                            tel_Log(TEL_LOG_INFO, "Choosing RIGHT line");
+                            tel_Log(TEL_LOG_INFO, "Choosing RIGHT line, out count: %d", selectedSplitInfo.lineOutCount);
                             break;
                         default:
-                            tel_Log(TEL_LOG_WARN, "Invalid line selection index %d", selectedSplitLineIndex);
+                            tel_Log(TEL_LOG_WARN, "Invalid line selection index %d, out count: %d", selectedSplitInfo.splitDirection, selectedSplitInfo.lineOutCount);
                             break;
                     }
                 }
@@ -299,15 +328,15 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
 
             if (detectedLineChunkNum == 1)
             {
-                // currentState = LINE_STATE_SINGLE_LINE_AFTER_QUAD;
-                // currentStateStartEncoderCnt = currentEncoderCnt;
-                // tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                // tel_Log(TEL_LOG_INFO, "Quad line reduced to single line, switching to SINGLE_LINE_AFTER_QUAD state");
-
-                currentState = LINE_STATE_WAIT_FOR_LINE_SPLIT_START;
-                tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                tel_Log(TEL_LOG_INFO, "Switching to WAIT_FOR_LINE_SPLIT_START state");
+                currentState = LINE_STATE_SINGLE_LINE_AFTER_QUAD;
                 currentStateStartEncoderCnt = currentEncoderCnt;
+                tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
+                tel_Log(TEL_LOG_INFO, "Quad line reduced to single line, switching to SINGLE_LINE_AFTER_QUAD state");
+
+                // currentState = LINE_STATE_WAIT_FOR_LINE_SPLIT_START;
+                // tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
+                // tel_Log(TEL_LOG_INFO, "Switching to WAIT_FOR_LINE_SPLIT_START state");
+                // currentStateStartEncoderCnt = currentEncoderCnt;
             }
             break;
         }
@@ -318,7 +347,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
                 lastDetectedLinePos = _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, false);
             }
 
-            if (currentEncoderCnt - currentStateStartEncoderCnt > 1 * DRV_ENCODER_COUNTS_PER_CM)
+            if (currentEncoderCnt - currentStateStartEncoderCnt > 4 * DRV_ENCODER_COUNTS_PER_CM)
             {
                 currentState = LINE_STATE_WAIT_FOR_LINE_SPLIT_START;
                 tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
@@ -360,27 +389,35 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
 
             if (detectedLineChunkNum == lastLineChunkNum)
             {
-                if (currentEncoderCnt - initialTypeDetectionEncoderCnt > 1 * DRV_ENCODER_COUNTS_PER_CM)
+                if (currentEncoderCnt - initialTypeDetectionEncoderCnt > 3 * DRV_ENCODER_COUNTS_PER_CM)
                 {
                     tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                    if (detectedLineChunkNum == 4 || detectedLineChunkNum == 0)
+                    if (selectedSplitInfo.lineOutCount != detectedLineChunkNum)
                     {
-                        tel_Log(TEL_LOG_WARN, "Line split expected, but %d lines detected, reverting to SINGLE_LINE state", detectedLineChunkNum);
-                        currentState = LINE_STATE_SINGLE_LINE;
-                        break;
+                        tel_Log(TEL_LOG_WARN, "Line out count mismatch, detected %d lines, expected %d lines", detectedLineChunkNum, selectedSplitInfo.lineOutCount);
+                        selectedSplitInfo.lineOutCount = detectedLineChunkNum - 1;
                     }
-                    if (selectedSplitLineIndex >= detectedLineChunkNum)
-                    {
-                        tel_Log(TEL_LOG_WARN, "Invalid line selection index %d, defaulting to %d", selectedSplitLineIndex, detectedLineChunkNum - 1);
-                        selectedSplitLineIndex = detectedLineChunkNum - 1;
-                    }
-                    lastDetectedLinePos = _line_RunLineDetectionOnPartialData(
-                        fmax(lineChunks[selectedSplitLineIndex].startPos - 1, 0),
-                        fmin(lineChunks[selectedSplitLineIndex].endPos + 1, 31) - lineChunks[selectedSplitLineIndex].startPos,
-                        adcValues.front_adc);
                     currentState = LINE_STATE_HANDLE_LINE_SPLIT;
                     currentStateStartEncoderCnt = currentEncoderCnt;
-                    tel_Log(TEL_LOG_INFO, "Switching to HANDLE_LINE_SPLIT state, selected line chunk: %d", selectedSplitLineIndex);
+                    tel_Log(TEL_LOG_INFO, "Line split stabilized with %d lines detected, switching to HANDLE_LINE_SPLIT state", detectedLineChunkNum);
+                    // if (detectedLineChunkNum == 4 || detectedLineChunkNum == 0)
+                    // {
+                    //     tel_Log(TEL_LOG_WARN, "Line split expected, but %d lines detected, reverting to SINGLE_LINE state", detectedLineChunkNum);
+                    //     currentState = LINE_STATE_SINGLE_LINE;
+                    //     break;
+                    // }
+                    // if (selectedSplitLineIndex >= detectedLineChunkNum)
+                    // {
+                    //     tel_Log(TEL_LOG_WARN, "Invalid line selection index %d, defaulting to %d", selectedSplitLineIndex, detectedLineChunkNum - 1);
+                    //     selectedSplitLineIndex = detectedLineChunkNum - 1;
+                    // }
+                    // lastDetectedLinePos = _line_RunLineDetectionOnPartialData(
+                    //     fmax(lineChunks[selectedSplitLineIndex].startPos - 1, 0),
+                    //     fmin(lineChunks[selectedSplitLineIndex].endPos + 1, 31) - lineChunks[selectedSplitLineIndex].startPos,
+                    //     adcValues.front_adc);
+                    // currentState = LINE_STATE_HANDLE_LINE_SPLIT;
+                    // currentStateStartEncoderCnt = currentEncoderCnt;
+                    // tel_Log(TEL_LOG_INFO, "Switching to HANDLE_LINE_SPLIT state, selected line chunk: %d", selectedSplitLineIndex);
                 }
             }
             else

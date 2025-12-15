@@ -28,7 +28,7 @@ static drv_ControlParamsType telVar_currentDrvParams = {
     .integralLimit = 0.5f,
     .periodUs = 1000 // 1 ms
 };
-static float telVar_currentMaxPower = 0.8f;
+static float telVar_currentMaxPower = 0.4f;
 static uint32_t telVar_maxEncoderCps = 300000; // 300k counts per second for now, TODO: tune properly
 
 //static imu_Imu _sys_imuInstance;
