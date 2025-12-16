@@ -17,7 +17,7 @@ static uint32_t lastTypeDetectionEncoderCnt = 0;
 static uint32_t currentStateStartEncoderCnt = 0;
 static uint32_t initialTypeDetectionEncoderCnt = 0;
 static uint8_t lastLineChunkNum = 0;
-static line_SplitInfoType selectedSplitInfo = {0};
+static line_SplitDirectionType selectedSplitInfo = 0;
 static float lastDetectedLinePos = 0.0f;
 
 static uint8_t lastDetectedChunkNum = 0;
@@ -96,6 +96,15 @@ static int _line_DetectLineChunks(line_DetectionChunkType chunks[4], uint16_t ad
     return chunkNum;
 }
 
+static bool _line_isFullBlack(uint16_t adcValues[32])
+{
+	for (int p = 0; p < 32; p++)
+	{
+		if(adcValues[p] < adcThreshold) return false;
+	}
+	return true;
+}
+
 static void _line_ShowFbLeds(uint16_t adcValues[32])
 {
     LS_LED_Values_Type led_values;
@@ -137,29 +146,22 @@ static float _line_DetectMainLine(uint16_t adcValues[32], line_DetectionChunkTyp
 
     if (useSelectedSplitLineIdx)
     {
-        if (selectedSplitInfo.splitDirection == LINE_SPLIT_RIGHT)
+        if (selectedSplitInfo == LINE_SPLIT_RIGHT)
         {
             selectedChunk = 0;
         }
-        else if (selectedSplitInfo.splitDirection == LINE_SPLIT_STRAIGHT)
+        else if (selectedSplitInfo == LINE_SPLIT_STRAIGHT)
         {
-            if (selectedSplitInfo.lineOutCount == 3)
+            if (lineChunkNum == 3)
             {
-                if (lineChunkNum == 3)
-                {
-                    selectedChunk = 1;
-                }
-                else
-                {
-                    selectedChunk = closestChunk;
-                }
+                selectedChunk = 1;
             }
             else
             {
-                selectedChunk = lineChunkNum - 1;
+                selectedChunk = closestChunk;
             }
         }
-        else if (selectedSplitInfo.splitDirection == LINE_SPLIT_LEFT)
+        else if (selectedSplitInfo == LINE_SPLIT_LEFT)
         {
             selectedChunk = lineChunkNum - 1;
         }
@@ -296,19 +298,19 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
                     tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
                     tel_Log(TEL_LOG_INFO, "Quad line detected");
                     selectedSplitInfo = chooseLineFunc(detectedLineChunkNum);
-                    switch (selectedSplitInfo.splitDirection)
+                    switch (selectedSplitInfo)
                     {
                         case LINE_SPLIT_LEFT:
-                            tel_Log(TEL_LOG_INFO, "Choosing LEFT line, out count: %d", selectedSplitInfo.lineOutCount);
+                            tel_Log(TEL_LOG_INFO, "Choosing LEFT line");
                             break;
                         case LINE_SPLIT_STRAIGHT:
-                            tel_Log(TEL_LOG_INFO, "Choosing STRAIGHT line, out count: %d", selectedSplitInfo.lineOutCount);
+                            tel_Log(TEL_LOG_INFO, "Choosing STRAIGHT line");
                             break;
                         case LINE_SPLIT_RIGHT:
-                            tel_Log(TEL_LOG_INFO, "Choosing RIGHT line, out count: %d", selectedSplitInfo.lineOutCount);
+                            tel_Log(TEL_LOG_INFO, "Choosing RIGHT line");
                             break;
                         default:
-                            tel_Log(TEL_LOG_WARN, "Invalid line selection index %d, out count: %d", selectedSplitInfo.splitDirection, selectedSplitInfo.lineOutCount);
+                            tel_Log(TEL_LOG_WARN, "Invalid line selection index %d", selectedSplitInfo);
                             break;
                     }
                 }
@@ -392,11 +394,10 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
                 if (currentEncoderCnt - initialTypeDetectionEncoderCnt > 3 * DRV_ENCODER_COUNTS_PER_CM)
                 {
                     tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                    if (selectedSplitInfo.lineOutCount != detectedLineChunkNum)
-                    {
-                        tel_Log(TEL_LOG_WARN, "Line out count mismatch, detected %d lines, expected %d lines", detectedLineChunkNum, selectedSplitInfo.lineOutCount);
-                        selectedSplitInfo.lineOutCount = detectedLineChunkNum - 1;
-                    }
+                    //if (selectedSplitInfo >= detectedLineChunkNum)
+                    //{
+                    //    tel_Log(TEL_LOG_WARN, "______Line stabilized with %d lines detected", detectedLineChunkNum);
+                    //}
                     currentState = LINE_STATE_HANDLE_LINE_SPLIT;
                     currentStateStartEncoderCnt = currentEncoderCnt;
                     tel_Log(TEL_LOG_INFO, "Line split stabilized with %d lines detected, switching to HANDLE_LINE_SPLIT state", detectedLineChunkNum);
@@ -440,10 +441,10 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
                 lastDetectedLinePos = _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, true);
             }
 
-            if (currentEncoderCnt - currentStateStartEncoderCnt > 40 * DRV_ENCODER_COUNTS_PER_CM)
+            if (currentEncoderCnt - currentStateStartEncoderCnt > 60 * DRV_ENCODER_COUNTS_PER_CM)
             {
                 currentState = LINE_STATE_SINGLE_LINE;
-                tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
+                tel_Log(TEL_LOG_DEBUG, "%u %d", currentEncoderCnt, detectedLineChunkNum);
                 tel_Log(TEL_LOG_INFO, "Exiting HANDLE_LINE_SPLIT state after some distance traveled");
             }
             break;
@@ -452,6 +453,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
 
     return (line_DetectionResultType){
         .detectedLinePos = lastDetectedLinePos,
-        .lineDetected = (currentState != LINE_STATE_NO_LINE)
+        .lineDetected = (currentState != LINE_STATE_NO_LINE),
+		.allBlack = _line_isFullBlack(adcValues.front_adc)
     };
 }

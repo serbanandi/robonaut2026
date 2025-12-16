@@ -7,20 +7,16 @@
 typedef struct {
     float detectedLinePos;
     bool lineDetected;
+    bool allBlack;
 } line_DetectionResultType;
 
 typedef enum {
     LINE_SPLIT_RIGHT = 0,
     LINE_SPLIT_STRAIGHT = 1,
-    LINE_SPLIT_LEFT = 2
+    LINE_SPLIT_LEFT = 2,
 } line_SplitDirectionType;
 
-typedef struct {
-    line_SplitDirectionType splitDirection;
-    int lineOutCount;
-} line_SplitInfoType;
-
-typedef line_SplitInfoType (*line_ChooseLineFunc)(int lineCount);
+typedef line_SplitDirectionType (*line_ChooseLineFunc)(int lineCount);
 
 void line_Init();
 
