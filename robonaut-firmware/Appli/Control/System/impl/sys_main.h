@@ -7,6 +7,4 @@
 #include "spi.h"
 #include "tim.h"
 
-extern COM_InitTypeDef BspCOMInit;
-
 #endif // SYS_MAIN_H

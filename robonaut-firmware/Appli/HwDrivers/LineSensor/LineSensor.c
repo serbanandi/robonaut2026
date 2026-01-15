@@ -28,14 +28,14 @@ typedef enum {
 // Defines
 #define ARRAY_LEN(x) (sizeof(x) / sizeof((x)[0]))
 #define SPI_TIMEOUT_MS	(10)
-#define LS_PERIOD_MS (5)
+#define LS_PERIOD_US (1000) // 1 ms
 #define LS_MAX_ADC_VAL (4095)
 
 // Variables
 static LS_Sensor_Type front_sensor;
 static LS_Sensor_Type rear_sensor;
 static LS_State_Type state = LS_STATE_IDLE;
-static uint32_t last_read_tick;
+static int32_t last_read_tick;
 
 // Static helper functions
 static void LS_ADC_SetCS(ADC_CS_Type cs)
@@ -305,34 +305,41 @@ bool LS_Init(SPI_HandleTypeDef* front_spi, SPI_HandleTypeDef* rear_spi)
 
 void LS_Process(void)
 {
-    switch (state)
-    {
-    case LS_STATE_IDLE:
-    	LS_ADC_SetCS(NONE);
-    	LS_IR_SetLatch(Disable);
-    	LS_IR_SetOutput(Enable);
+	LS_ADC_SetCS(NONE);
+	LS_IR_SetLatch(Disable);
+	LS_IR_SetOutput(Enable);
+	if (!LS_Read()) {
+		Log("LS", "read failed");
+	}
 
-    	last_read_tick = HAL_GetTick();
-    	state = LS_STATE_WAIT;
-        break;
+    // switch (state)
+    // {
+    // case LS_STATE_IDLE:
+    // 	LS_ADC_SetCS(NONE);
+    // 	LS_IR_SetLatch(Disable);
+    // 	LS_IR_SetOutput(Enable);
 
-    case LS_STATE_WAIT:
-    	if ((HAL_GetTick() - last_read_tick) >= LS_PERIOD_MS)
-    		state = LS_STATE_READ;
-        break;
+    // 	last_read_tick = MT_GetTick();
+    // 	state = LS_STATE_WAIT;
+    //     break;
 
-    case LS_STATE_READ:
-    	last_read_tick = HAL_GetTick();
+    // case LS_STATE_WAIT:
+    // 	if (((int32_t)MT_GetTick() - last_read_tick + 0x10000) % 0x10000 >= LS_PERIOD_US)
+    // 		state = LS_STATE_READ;
+    //     break;
 
-        if (!LS_Read()) {
-            Log("LS", "read failed");
-        }
+    // case LS_STATE_READ:
+    // 	last_read_tick = MT_GetTick();
 
-        state = LS_STATE_WAIT;
-        break;
+    //     if (!LS_Read()) {
+    //         Log("LS", "read failed");
+    //     }
 
-    default:
-        state = LS_STATE_IDLE;
-        break;
-    }
+    //     state = LS_STATE_WAIT;
+    //     break;
+
+    // default:
+    //     state = LS_STATE_IDLE;
+    //     break;
+    // }
 }

@@ -86,7 +86,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOO, _LINE_LED_OE_Pin|LINE_INF_LE_Pin|_LINE_INF_OE_Pin|LINE_LED_LE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, _AD_CS3_Pin|_AD_CS2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, IMU_CS_Pin|_AD_CS3_Pin|_AD_CS2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(_AD_CS1_GPIO_Port, _AD_CS1_Pin, GPIO_PIN_RESET);
@@ -125,12 +125,18 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : GEN_PIN1_Pin UI_CONF_Pin UI_B_Pin MOT_STATUS_Pin
-                           UI_PUSH_Pin UI_A_Pin UI_BACK_Pin GEN_PIN2_Pin */
-  GPIO_InitStruct.Pin = GEN_PIN1_Pin|UI_CONF_Pin|UI_B_Pin|MOT_STATUS_Pin
-                          |UI_PUSH_Pin|UI_A_Pin|UI_BACK_Pin|GEN_PIN2_Pin;
+  /*Configure GPIO pins : GEN_PIN1_Pin MOT_STATUS_Pin GEN_PIN2_Pin */
+  GPIO_InitStruct.Pin = GEN_PIN1_Pin|MOT_STATUS_Pin|GEN_PIN2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOP, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : UI_CONF_Pin UI_B_Pin UI_PUSH_Pin UI_A_Pin
+                           UI_BACK_Pin */
+  GPIO_InitStruct.Pin = UI_CONF_Pin|UI_B_Pin|UI_PUSH_Pin|UI_A_Pin
+                          |UI_BACK_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOP, &GPIO_InitStruct);
 
   /*Configure GPIO pin : MOT_EN_Pin */
@@ -147,8 +153,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOO, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : _AD_CS3_Pin _AD_CS2_Pin */
-  GPIO_InitStruct.Pin = _AD_CS3_Pin|_AD_CS2_Pin;
+  /*Configure GPIO pins : IMU_CS_Pin _AD_CS3_Pin _AD_CS2_Pin */
+  GPIO_InitStruct.Pin = IMU_CS_Pin|_AD_CS3_Pin|_AD_CS2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

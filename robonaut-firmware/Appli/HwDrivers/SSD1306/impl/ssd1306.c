@@ -4,7 +4,7 @@
 #include <string.h>  // For memcpy
 #include "i2c.h"
 #include "ssd1306_conf.h"
-#include "int_interface.h"
+#include "IntHandler/int_interface.h"
 
 // Struct to store transformations
 typedef struct {
@@ -137,7 +137,7 @@ void ssd1306_Init(void) {
     
     // Flush buffer to screen
     ssd1306_UpdateScreen();
-    ssd1306_WaitForScreenUpdateCplt();
+    //ssd1306_WaitForScreenUpdateCplt();
     
     // Set default values for screen object
     SSD1306.CurrentX = 0;

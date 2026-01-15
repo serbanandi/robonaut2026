@@ -5,30 +5,23 @@
 #include <stdbool.h>
 
 typedef struct {
-    uint16_t adcThreshold;
-    bool useSingleLineDetection;
-} line_ParamSettingsType;
+    float detectedLinePos;
+    bool lineDetected;
+    bool allBlack;
+} line_DetectionResultType;
 
 typedef enum {
-    LINE_NO_LINE,
-    LINE_SINGLE_LINE,
-    LINE_TRIPLE_LINE,
-    LINE_TRIPLE_LINE_DASHED
-} line_DetectedLineType;
+    LINE_SPLIT_RIGHT = 0,
+    LINE_SPLIT_STRAIGHT = 1,
+    LINE_SPLIT_LEFT = 2,
+} line_SplitDirectionType;
 
-typedef struct {
-    line_DetectedLineType lineType;
-    float position;
-} line_DetectionResultType;
+typedef line_SplitDirectionType (*line_ChooseLineFunc)(int lineCount);
 
 void line_Init();
 
-void line_SetParams(const line_ParamSettingsType* params);
-
 void line_ResetInternalState();
 
-void line_Process();
-
-void line_GetDetectionResult(line_DetectionResultType* result);
+line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc);
 
 #endif // LINE_INTERFACE_H
