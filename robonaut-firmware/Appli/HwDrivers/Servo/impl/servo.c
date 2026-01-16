@@ -16,22 +16,20 @@ void servo_Init(void)
  */
 void servo_SetAngle(servo_SelectType servo, float pos)
 {
-    if (pos < -1.0f) pos = -1.0f;
-    if (pos >  1.0f) pos =  1.0f;
+    if (pos < -1.0f)
+        pos = -1.0f;
+    if (pos > 1.0f)
+        pos = 1.0f;
 
-    uint32_t pulseWidth = (uint32_t)((((pos + 1.0f) / 2.0f) * (SERVO_MAX_PULSE_WIDTH - SERVO_MIN_PULSE_WIDTH)) + SERVO_MIN_PULSE_WIDTH);
+    uint32_t pulseWidth =
+        (uint32_t) ((((pos + 1.0f) / 2.0f) * (SERVO_MAX_PULSE_WIDTH - SERVO_MIN_PULSE_WIDTH)) + SERVO_MIN_PULSE_WIDTH);
 
     uint32_t channel;
     switch (servo)
     {
-        case SERVO_FRONT:
-            channel = SERVO_FRONT_CHANNEL;
-            break;
-        case SERVO_BACK:
-            channel = SERVO_BACK_CHANNEL;
-            break;
-        default:
-            return; // Invalid servo selection
+        case SERVO_FRONT: channel = SERVO_FRONT_CHANNEL; break;
+        case SERVO_BACK: channel = SERVO_BACK_CHANNEL; break;
+        default: return; // Invalid servo selection
     }
 
     __HAL_TIM_SET_COMPARE(SERVO_TIMER, channel, pulseWidth);

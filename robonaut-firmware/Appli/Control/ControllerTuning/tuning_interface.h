@@ -4,7 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct{
+typedef struct
+{
     uint16_t threshold;
     float p_coeff;
     float i_coeff;

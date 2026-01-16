@@ -10,9 +10,9 @@
 // Control parameters structure
 typedef struct
 {
-    float P, I, D;          // PID controller coefficients
-    float integralLimit;    // Integral windup limit
-    uint32_t periodUs;      // Encoder speed calculation and control loop period in microseconds
+    float P, I, D;       // PID controller coefficients
+    float integralLimit; // Integral windup limit
+    uint32_t periodUs;   // Encoder speed calculation and control loop period in microseconds
 } drv_ControlParamsType;
 
 /**
@@ -21,7 +21,7 @@ typedef struct
  * @param maxPower The maximum power level for the motor, in the range [0.0, 1.0].
  * @param maxEncoderCps The maximum encoder counts per second for speed calculations.
  */
-void drv_Init(const drv_ControlParamsType *controlParams, float maxPower, uint32_t maxEncoderCps);
+void drv_Init(const drv_ControlParamsType* controlParams, float maxPower, uint32_t maxEncoderCps);
 
 /**
  * @brief Enable or disable the drive system.
@@ -45,7 +45,7 @@ void drv_SetMaxPower(float maxPower);
  * @brief Set new control parameters.
  * @param controlParams Pointer to the new control parameters structure.
  */
-void drv_SetControlParams(const drv_ControlParamsType *controlParams);
+void drv_SetControlParams(const drv_ControlParamsType* controlParams);
 
 /**
  * @brief Set the maximum encoder counts per second for speed calculations.

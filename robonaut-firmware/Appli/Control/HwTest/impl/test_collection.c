@@ -3,13 +3,12 @@
 #include "LineSensor/LineSensor.h"
 #include "MicroTimer/MicroTimer.h"
 
-#include "SSD1306/ssd1306_interface.h"
-#include "SSD1306/ssd1306_fonts.h"
-#include "UserInput/ui_interface.h"
-#include "Servo/servo_interface.h"
 #include "Drive/drv_interface.h"
+#include "SSD1306/ssd1306_fonts.h"
+#include "SSD1306/ssd1306_interface.h"
+#include "Servo/servo_interface.h"
 #include "Telemetry/tel_interface.h"
-
+#include "UserInput/ui_interface.h"
 
 static bool telVar_motorEnabled = false;
 static float telVar_fontServoTestAngle = 0.0f;
@@ -37,11 +36,10 @@ void test_ProcessLineSensors(void)
     for (int i = 0; i < 32; i++)
     {
         led_values.front_led[i] = !(adc_values.front_adc[i] < telVar_lineLedAdcThr);
-        led_values.rear_led[i]  = !(adc_values.rear_adc[i]  < telVar_lineLedAdcThr);
+        led_values.rear_led[i] = !(adc_values.rear_adc[i] < telVar_lineLedAdcThr);
     }
     LS_SetFbLEDs(&led_values);
 }
-
 
 void test_ShowUiAndOLEDDemo(void)
 {
@@ -58,8 +56,8 @@ void test_ShowUiAndOLEDDemo(void)
     ssd1306_SetCursor(0, 0);
 
     enterPressedCount += ui_state.enterButtonWasPressed ? 1 : 0;
-    backPressedCount  += ui_state.backButtonWasPressed  ? 1 : 0;
-    knobPressedCount  += ui_state.knobButtonWasPressed  ? 1 : 0;
+    backPressedCount += ui_state.backButtonWasPressed ? 1 : 0;
+    knobPressedCount += ui_state.knobButtonWasPressed ? 1 : 0;
 
     if (ui_state.enterButtonWasPressed || ui_state.backButtonWasPressed || ui_state.knobButtonWasPressed)
     {
@@ -72,7 +70,7 @@ void test_ShowUiAndOLEDDemo(void)
     lastUiUpdateTime = currentTime;
 
     char buffer[64];
-    
+
     snprintf(buffer, sizeof(buffer), "Time: %lu\n", currentTime / 1000);
     ssd1306_SetCursor(0, 0);
     ssd1306_WriteString(buffer, Font_7x10, 0);
@@ -95,7 +93,6 @@ void test_ShowUiAndOLEDDemo(void)
     ssd1306_UpdateScreen();
 }
 
-
 void test_ProcessServoTest(void)
 {
     servo_SetAngle(SERVO_FRONT, telVar_fontServoTestAngle);
@@ -116,13 +113,11 @@ void test_ProcessServoTest(void)
     // }
 }
 
-
 void test_ProcessMotorTest(void)
 {
     drv_Enable(telVar_motorEnabled);
     drv_SetSpeed(telVar_motorTestSpeed);
 }
-
 
 void test_ProcessAll(void)
 {
@@ -131,4 +126,3 @@ void test_ProcessAll(void)
     test_ShowUiAndOLEDDemo();
     test_ProcessMotorTest();
 }
-

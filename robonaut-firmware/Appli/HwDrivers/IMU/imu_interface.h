@@ -7,12 +7,15 @@
 
 #include "stm32n6xx_hal.h"
 
-typedef union imu_Vec3 {
-    struct {
+typedef union imu_Vec3
+{
+    struct
+    {
         float x, y, z;
     };
 
-    struct {
+    struct
+    {
         float roll, pitch, yaw;
     };
 
@@ -23,7 +26,8 @@ typedef union imu_Vec3 {
  * @brief MPU9250 IMU and compass IC I2C driver for the STM32 microcontroller.
  * The implementation heavily relies on the HAL STM32 drivers.
  */
-typedef struct imu_Imu {
+typedef struct imu_Imu
+{
     SPI_HandleTypeDef* hspi;
 
     float accSensitivity, gyroSensitivity;
@@ -59,14 +63,12 @@ typedef struct imu_Imu {
  *
  * @return 1 on success, else 0
  */
-bool imu_init(
-    imu_Imu* imu,
-    SPI_HandleTypeDef* hspi,
-    GPIO_TypeDef* csPort,
-    uint16_t csPin,
-    IRQn_Type readIrq,
-    TIM_HandleTypeDef* htim
-);
+bool imu_init(imu_Imu* imu,
+              SPI_HandleTypeDef* hspi,
+              GPIO_TypeDef* csPort,
+              uint16_t csPin,
+              IRQn_Type readIrq,
+              TIM_HandleTypeDef* htim);
 #else
 /**
  * @brief Initializes the MPU9250 IMU driver for sync (blocking) data retrieval.
@@ -75,12 +77,7 @@ bool imu_init(
  *
  * @return 1 on success, else 0
  */
-bool imu_init(
-    imu_Imu* imu,
-    SPI_HandleTypeDef* hspi,
-    GPIO_TypeDef* csPort,
-    uint16_t csPin
-);
+bool imu_init(imu_Imu* imu, SPI_HandleTypeDef* hspi, GPIO_TypeDef* csPort, uint16_t csPin);
 #endif
 
 /**

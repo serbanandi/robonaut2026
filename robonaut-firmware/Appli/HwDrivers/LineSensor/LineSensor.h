@@ -7,12 +7,14 @@
 bool LS_Init(SPI_HandleTypeDef* front_spi, SPI_HandleTypeDef* rear_spi);
 void LS_Process(void);
 
-typedef struct {
+typedef struct
+{
     uint16_t front_adc[32];
     uint16_t rear_adc[32];
 } LS_ADC_Values_Type;
 
-typedef struct {
+typedef struct
+{
     bool front_led[32];
     bool rear_led[32];
 } LS_LED_Values_Type;

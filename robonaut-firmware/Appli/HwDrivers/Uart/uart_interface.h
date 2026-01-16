@@ -3,20 +3,21 @@
 
 #include "stm32n6xx_hal.h"
 
-#define UART_WRITE_BUFFER_LENGTH	2500
-#define UART_READ_BUFFER_LENGTH		1000
+#define UART_WRITE_BUFFER_LENGTH 2500
+#define UART_READ_BUFFER_LENGTH 1000
 
-typedef struct {
-	UART_HandleTypeDef* huart;
-	IRQn_Type uartIr;
+typedef struct
+{
+    UART_HandleTypeDef* huart;
+    IRQn_Type uartIr;
 
-	volatile uint8_t writeCircularBuffer[UART_WRITE_BUFFER_LENGTH];
-	volatile int32_t startOfWriteData;
-	volatile int32_t endOfWriteData;
-	volatile uint8_t transmissionInProgress;
+    volatile uint8_t writeCircularBuffer[UART_WRITE_BUFFER_LENGTH];
+    volatile int32_t startOfWriteData;
+    volatile int32_t endOfWriteData;
+    volatile uint8_t transmissionInProgress;
 
-	uint8_t readCircularBuffer[UART_READ_BUFFER_LENGTH];
-	uint16_t readPtr;
+    uint8_t readCircularBuffer[UART_READ_BUFFER_LENGTH];
+    uint16_t readPtr;
     uint8_t readTerminationChar;
 } uart_UartType;
 
@@ -28,7 +29,7 @@ typedef struct {
  * @param readTerminationChar Character that indicates the end of a read operation
  * @return 1 on success, 0 on failure
  */
-uint8_t uart_Init(uart_UartType* uart, UART_HandleTypeDef *huart, IRQn_Type uartIr, uint8_t readTerminationChar);
+uint8_t uart_Init(uart_UartType* uart, UART_HandleTypeDef* huart, IRQn_Type uartIr, uint8_t readTerminationChar);
 
 /**
  * @brief Transmit data over UART
@@ -37,7 +38,7 @@ uint8_t uart_Init(uart_UartType* uart, UART_HandleTypeDef *huart, IRQn_Type uart
  * @param size Size of the data to be transmitted
  * @return 1 on success, 0 on failure
  */
-uint8_t uart_Transmit(uart_UartType* uart, const uint8_t *str, const size_t size);
+uint8_t uart_Transmit(uart_UartType* uart, const uint8_t* str, const size_t size);
 
 /**
  * @brief Receive data from UART

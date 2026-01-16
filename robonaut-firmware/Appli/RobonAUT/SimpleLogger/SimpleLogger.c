@@ -1,6 +1,6 @@
 #include "SimpleLogger.h"
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include "MicroTimer/MicroTimer.h"
 
 void Log(const char* tag, const char* str, ...)

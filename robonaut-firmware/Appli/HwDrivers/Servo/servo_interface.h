@@ -1,7 +1,8 @@
 #ifndef SERVO_INTERFACE_H
 #define SERVO_INTERFACE_H
 
-typedef enum {
+typedef enum
+{
     SERVO_FRONT = 0,
     SERVO_BACK,
 } servo_SelectType;

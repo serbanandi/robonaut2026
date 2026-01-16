@@ -1,10 +1,11 @@
 #ifndef UI_INTERFACE_H
 #define UI_INTERFACE_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-typedef struct {
+typedef struct
+{
     bool enterButtonWasPressed;
     bool backButtonWasPressed;
     bool knobButtonWasPressed;

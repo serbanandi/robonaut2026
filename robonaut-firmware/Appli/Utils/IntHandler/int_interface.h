@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-typedef enum {
+typedef enum
+{
     INT_UART_TX_CPLT = 0,
     INT_UART_RX_CPLT,
     INT_UART_RX_EVENT,

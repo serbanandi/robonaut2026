@@ -1,6 +1,6 @@
 #include "drv_encoder.h"
 
-void _drv_InitEncoder(void) 
+void _drv_InitEncoder(void)
 {
     HAL_TIM_Encoder_Start(DRV_ENCODER_TIMER, TIM_CHANNEL_ALL);
     __HAL_TIM_SET_COUNTER(DRV_ENCODER_TIMER, 0);

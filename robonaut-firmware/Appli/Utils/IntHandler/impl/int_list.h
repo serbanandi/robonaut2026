@@ -5,7 +5,8 @@
 
 #define _INT_MAX_SUBSCR_COUNT 10
 
-typedef struct _int_CallbackListEntry {
+typedef struct _int_CallbackListEntry
+{
     int_CallbackFn cbFn;
 
     // driver instance

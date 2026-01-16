@@ -1,16 +1,18 @@
 #ifndef LINE_INTERFACE_H
 #define LINE_INTERFACE_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-typedef struct {
+typedef struct
+{
     float detectedLinePos;
     bool lineDetected;
     bool allBlack;
 } line_DetectionResultType;
 
-typedef enum {
+typedef enum
+{
     LINE_SPLIT_RIGHT = 0,
     LINE_SPLIT_STRAIGHT = 1,
     LINE_SPLIT_LEFT = 2,

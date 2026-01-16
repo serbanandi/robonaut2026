@@ -15,6 +15,6 @@ void _drv_EnableMotor(bool enable);
 
 void _drv_SetPower(float power);
 
-void _drv_GetMaxPower(float *maxPower);
+void _drv_GetMaxPower(float* maxPower);
 
 #endif // DRV_MOTOR_H

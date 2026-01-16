@@ -1,8 +1,8 @@
-#include "imu/imu_interface.h"
-#include "assert.h"
-#include "imu/impl/imu_registers.h"
 #include "IntHandler/int_interface.h"
 #include "Telemetry/tel_interface.h"
+#include "assert.h"
+#include "imu/impl/imu_registers.h"
+#include "imu/imu_interface.h"
 
 #include "stm32n6xx_hal.h"
 
@@ -13,13 +13,15 @@
 #define _imu_SPI_TIMEOUT 3
 
 #ifdef ASYNC_IMU
-static void _imu_spiTransmitCpltCallback(void* context) {
+static void _imu_spiTransmitCpltCallback(void* context)
+{
     imu_Imu* imu = (imu_Imu*) context;
 
     HAL_SPI_Receive_DMA(imu->hspi, (uint8_t*) imu->imuBuffer, sizeof(imu->imuBuffer));
 }
 
-static void _imu_spiReceiveCpltCallback(void* context) {
+static void _imu_spiReceiveCpltCallback(void* context)
+{
     imu_Imu* imu = (imu_Imu*) context;
 
     memcpy((void*) imu->imuData, (void*) imu->imuBuffer, sizeof(imu->imuBuffer));
@@ -31,7 +33,8 @@ static void _imu_spiReceiveCpltCallback(void* context) {
     imu->newData = true;
 }
 
-static void _imu_timPeriodElapsedCallback(void* context) {
+static void _imu_timPeriodElapsedCallback(void* context)
+{
     imu_Imu* imu = (imu_Imu*) context;
     if (!imu->readEnabled || imu->readInProgress)
         return;
@@ -44,7 +47,8 @@ static void _imu_timPeriodElapsedCallback(void* context) {
     HAL_SPI_Transmit_IT(imu->hspi, &imu->readMemAddress, 1);
 }
 
-bool imu_newDataAvailable(imu_Imu* imu) {
+bool imu_newDataAvailable(imu_Imu* imu)
+{
     bool tmp = imu->newData;
 
     if (tmp)
@@ -54,11 +58,12 @@ bool imu_newDataAvailable(imu_Imu* imu) {
 }
 #endif
 
-
-static bool _imu_writeBlocking(imu_Imu* imu, uint8_t regAddress, uint8_t data) {
+static bool _imu_writeBlocking(imu_Imu* imu, uint8_t regAddress, uint8_t data)
+{
 #ifdef ASYNC_IMU
     imu->readEnabled = false;
-    while (imu->readInProgress) {
+    while (imu->readInProgress)
+    {
     }
 #endif
 
@@ -66,10 +71,12 @@ static bool _imu_writeBlocking(imu_Imu* imu, uint8_t regAddress, uint8_t data) {
     uint8_t txData[] = { regAddress, data };
     HAL_GPIO_WritePin(imu->csPort, imu->csPin, 0);
 
-    while (true) {
+    while (true)
+    {
         HAL_StatusTypeDef status = HAL_SPI_Transmit(imu->hspi, txData, 2, _imu_SPI_TIMEOUT);
 
-        if (status != HAL_BUSY) {
+        if (status != HAL_BUSY)
+        {
             ok = status == HAL_OK;
             break;
         }
@@ -84,11 +91,12 @@ static bool _imu_writeBlocking(imu_Imu* imu, uint8_t regAddress, uint8_t data) {
     return ok;
 }
 
-
-static bool _imu_readBlocking(imu_Imu* imu, uint8_t regAddress, uint8_t numBytes, volatile uint8_t* buffer) {
+static bool _imu_readBlocking(imu_Imu* imu, uint8_t regAddress, uint8_t numBytes, volatile uint8_t* buffer)
+{
 #ifdef ASYNC_IMU
     imu->readEnabled = false;
-    while (imu->readInProgress) {
+    while (imu->readInProgress)
+    {
     }
 #endif
 
@@ -96,10 +104,12 @@ static bool _imu_readBlocking(imu_Imu* imu, uint8_t regAddress, uint8_t numBytes
     regAddress |= 0x80;
     HAL_GPIO_WritePin(imu->csPort, imu->csPin, 0);
 
-    while (true) {
+    while (true)
+    {
         HAL_StatusTypeDef status = HAL_SPI_Transmit(imu->hspi, &regAddress, 1, _imu_SPI_TIMEOUT);
 
-        if (status != HAL_BUSY) {
+        if (status != HAL_BUSY)
+        {
             ok = status == HAL_OK;
             break;
         }
@@ -123,7 +133,8 @@ bool imu_init(imu_Imu* imu,
               GPIO_TypeDef* csPort,
               uint16_t csPin,
               IRQn_Type readIrq,
-              TIM_HandleTypeDef* htim) {
+              TIM_HandleTypeDef* htim)
+{
 
     imu->readIrq = readIrq;
     imu->newData = false;
@@ -131,7 +142,8 @@ bool imu_init(imu_Imu* imu,
     imu->readInProgress = false;
 
 #else
-bool imu_init(imu_Imu* imu, SPI_HandleTypeDef* hspi, GPIO_TypeDef* csPort, uint16_t csPin) {
+bool imu_init(imu_Imu* imu, SPI_HandleTypeDef* hspi, GPIO_TypeDef* csPort, uint16_t csPin)
+{
 #endif
 
     imu->hspi = hspi;
@@ -170,12 +182,14 @@ bool imu_init(imu_Imu* imu, SPI_HandleTypeDef* hspi, GPIO_TypeDef* csPort, uint1
 
 #define _imu_GYRO_OFFSET_SAMPLE_SIZE 0xff
 
-bool imu_calculateGyroOffset(imu_Imu* imu) {
+bool imu_calculateGyroOffset(imu_Imu* imu)
+{
     bool prevEnabled = imu->useGyroOffsets;
     imu->useGyroOffsets = false;
 
     imu->gyroOffset = (imu_Vec3) { .x = 0, .y = 0, .z = 0 };
-    for (int p = 0; p < _imu_GYRO_OFFSET_SAMPLE_SIZE; p++) {
+    for (int p = 0; p < _imu_GYRO_OFFSET_SAMPLE_SIZE; p++)
+    {
         imu_Vec3 res;
         imu_readGyroData(imu, &res);
 
@@ -195,18 +209,21 @@ bool imu_calculateGyroOffset(imu_Imu* imu) {
     return true;
 }
 
-void imu_enableGyroOffsetSubtraction(imu_Imu* imu, bool enabled) {
+void imu_enableGyroOffsetSubtraction(imu_Imu* imu, bool enabled)
+{
     imu->useGyroOffsets = enabled;
 }
 
-bool imu_detectImu(imu_Imu* imu) {
+bool imu_detectImu(imu_Imu* imu)
+{
     uint8_t whoAmI;
     _imu_readBlocking(imu, IMU_WHO_AM_I_MPU9250, 1, &whoAmI);
 
     return whoAmI == 0x73;
 }
 
-bool imu_setDefaultSettings(imu_Imu* imu) {
+bool imu_setDefaultSettings(imu_Imu* imu)
+{
     // Set gyro full scale range (+-2000DPS)
     imu_setGyroSensitivity(imu, 3);
 
@@ -231,13 +248,15 @@ bool imu_setDefaultSettings(imu_Imu* imu) {
     return true;
 }
 
-bool imu_setSampleRateDivider(imu_Imu* imu, uint8_t divider) {
+bool imu_setSampleRateDivider(imu_Imu* imu, uint8_t divider)
+{
     _imu_writeBlocking(imu, IMU_SMPLRT_DIV, divider);
 
     return true;
 }
 
-bool imu_enableAccDLPF(imu_Imu* imu, bool enable) {
+bool imu_enableAccDLPF(imu_Imu* imu, bool enable)
+{
     uint8_t accConfigTmp;
     _imu_readBlocking(imu, IMU_ACCEL_CONFIG2, 1, &accConfigTmp);
     accConfigTmp &= 0xf7;
@@ -250,7 +269,8 @@ bool imu_enableAccDLPF(imu_Imu* imu, bool enable) {
     return true;
 }
 
-bool imu_enableGyroAndTempDLPF(imu_Imu* imu, bool enable) {
+bool imu_enableGyroAndTempDLPF(imu_Imu* imu, bool enable)
+{
     uint8_t gyroConfigTmp;
     _imu_readBlocking(imu, IMU_GYRO_CONFIG, 1, &gyroConfigTmp);
     gyroConfigTmp &= 0xfc;
@@ -263,7 +283,8 @@ bool imu_enableGyroAndTempDLPF(imu_Imu* imu, bool enable) {
     return true;
 }
 
-bool imu_setAccDLPF(imu_Imu* imu, uint8_t value) {
+bool imu_setAccDLPF(imu_Imu* imu, uint8_t value)
+{
     uint8_t accConfigTmp;
     _imu_readBlocking(imu, IMU_ACCEL_CONFIG2, 1, &accConfigTmp);
     accConfigTmp &= 0xf8;
@@ -273,7 +294,8 @@ bool imu_setAccDLPF(imu_Imu* imu, uint8_t value) {
     return true;
 }
 
-bool imu_setGyroAndTempDLPF(imu_Imu* imu, uint8_t value) {
+bool imu_setGyroAndTempDLPF(imu_Imu* imu, uint8_t value)
+{
     uint8_t configTmp;
     _imu_readBlocking(imu, IMU_CONFIG, 1, &configTmp);
     configTmp &= 0xf8;
@@ -283,7 +305,8 @@ bool imu_setGyroAndTempDLPF(imu_Imu* imu, uint8_t value) {
     return true;
 }
 
-bool imu_setAccSensitivity(imu_Imu* imu, uint8_t sensitivity) {
+bool imu_setAccSensitivity(imu_Imu* imu, uint8_t sensitivity)
+{
     assert(sensitivity <= 3);
 
     uint8_t accConfigTmp;
@@ -296,7 +319,8 @@ bool imu_setAccSensitivity(imu_Imu* imu, uint8_t sensitivity) {
     return true;
 }
 
-bool imu_setGyroSensitivity(imu_Imu* imu, uint8_t sensitivity) {
+bool imu_setGyroSensitivity(imu_Imu* imu, uint8_t sensitivity)
+{
     assert(sensitivity <= 3);
 
     uint8_t gyroConfigTmp;
@@ -311,7 +335,8 @@ bool imu_setGyroSensitivity(imu_Imu* imu, uint8_t sensitivity) {
     return true;
 }
 
-bool imu_readGyroData(imu_Imu* imu, imu_Vec3* data) {
+bool imu_readGyroData(imu_Imu* imu, imu_Vec3* data)
+{
 
 #ifdef ASYNC_IMU
     HAL_NVIC_DisableIRQ(imu->readIrq);
@@ -331,7 +356,8 @@ bool imu_readGyroData(imu_Imu* imu, imu_Vec3* data) {
 
     arm_scale_f32(tmp.arr, (PI / 180) * imu->gyroSensitivity, data->arr, 3);
 
-    if (imu->useGyroOffsets) {
+    if (imu->useGyroOffsets)
+    {
         arm_sub_f32(data->arr, imu->gyroOffset.arr, tmp.arr, 3);
 
         // TODO: jobb?
@@ -341,7 +367,8 @@ bool imu_readGyroData(imu_Imu* imu, imu_Vec3* data) {
     return true;
 }
 
-bool imu_readAccData(imu_Imu* imu, imu_Vec3* out) {
+bool imu_readAccData(imu_Imu* imu, imu_Vec3* out)
+{
 
 #ifdef ASYNC_IMU
     HAL_NVIC_DisableIRQ(imu->readIrq);
@@ -364,7 +391,8 @@ bool imu_readAccData(imu_Imu* imu, imu_Vec3* out) {
     return true;
 }
 
-float imu_readTempData(imu_Imu* imu) {
+float imu_readTempData(imu_Imu* imu)
+{
 
 #ifdef ASYNC_IMU
     HAL_NVIC_DisableIRQ(imu->readIrq);

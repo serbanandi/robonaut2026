@@ -4,21 +4,23 @@
 #include <stdint.h>
 
 // Variable Types
-typedef enum {
-    TEL_UINT8  = 0,
-    TEL_INT8   = 1,
+typedef enum
+{
+    TEL_UINT8 = 0,
+    TEL_INT8 = 1,
     TEL_UINT16 = 2,
-    TEL_INT16  = 3,
+    TEL_INT16 = 3,
     TEL_UINT32 = 4,
-    TEL_INT32  = 5,
-    TEL_FLOAT  = 6
+    TEL_INT32 = 5,
+    TEL_FLOAT = 6
 } tel_VarTypeType;
 
 // Log Levels
-typedef enum {
+typedef enum
+{
     TEL_LOG_DEBUG = 0,
-    TEL_LOG_INFO  = 1,
-    TEL_LOG_WARN  = 2,
+    TEL_LOG_INFO = 1,
+    TEL_LOG_WARN = 2,
     TEL_LOG_ERROR = 3
 } tel_LogLevelType;
 

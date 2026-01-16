@@ -1,8 +1,8 @@
+#include <stdint.h>
 #include "../ui_interface.h"
 #include "main.h"
-#include <stdint.h>
 
-static ui_StateType currentState = {0};
+static ui_StateType currentState = { 0 };
 static int32_t encoderPosition = 0;
 
 static bool enterButtonIsPressed = false;
@@ -12,11 +12,9 @@ static uint32_t lastEnterButtonPressTime = 0;
 static uint32_t lastBackButtonPressTime = 0;
 static uint32_t lastKnobButtonPressTime = 0;
 
-void ui_Init(void) 
-{
-}
+void ui_Init(void) {}
 
-void ui_Process() 
+void ui_Process()
 {
     // Read encoder position
     static int lastA = 0;
@@ -47,11 +45,11 @@ void ui_Process()
     }
     // else if (lastA == 1 && currentA == 0)
     // {
-    //     if (currentB == 0) 
+    //     if (currentB == 0)
     //     {
     //         encoderPosition++;
-    //     } 
-    //     else 
+    //     }
+    //     else
     //     {
     //         encoderPosition--;
     //     }
@@ -98,9 +96,9 @@ void ui_Process()
     }
 }
 
-void ui_GetButtonState(ui_StateType* state) 
+void ui_GetButtonState(ui_StateType* state)
 {
-    if (state != NULL) 
+    if (state != NULL)
     {
         *state = currentState;
     }
@@ -109,7 +107,7 @@ void ui_GetButtonState(ui_StateType* state)
     currentState.knobButtonWasPressed = false;
 }
 
-int32_t ui_GetEncoderPosition() 
+int32_t ui_GetEncoderPosition()
 {
     return encoderPosition;
 }
