@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "default",
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.26100.0",
+            "compilerPath": "arm-none-eabi-gcc",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-arm",
+            "compileCommands": [
+                "${workspaceFolder}/Appli/build/Debug/compile_commands.json",
+                "${workspaceFolder}/FSBL/build/Debug/compile_commands.json"
+            ]
+        }
+    ],
+    "version": 4
+}

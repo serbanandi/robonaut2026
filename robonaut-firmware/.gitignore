@@ -5,10 +5,9 @@
 .metadata/
 
 #Debug
-Debug/
-debug/
-Release/
-release
+FSBL/build/
+Appli/build/
+build/
 
 mx.scratch
 
@@ -39,3 +38,6 @@ mx.scratch
 *.su
 *.idb
 *.pdb
+
+/mx-generated.cmake
+starm-clang.cmake

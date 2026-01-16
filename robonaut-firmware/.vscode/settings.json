@@ -1,0 +1,10 @@
+{
+    "stm32.projectName": "robonaut-firmware",
+    "stm32.programmerPath": "D:\\Programs\\STM32CubeCLT_1.20.0\\STM32CubeProgrammer\\bin",
+    "stm32.svdPath": "D:\\Programs\\STM32CubeCLT_1.20.0\\STMicroelectronics_CMSIS_SVD\\STM32N657.svd",
+    "stm32.device": "STM32N657X0H3Q",
+    "editor.formatOnSave": true,
+    "C_Cpp.formatting": "clangFormat",
+    "C_Cpp.clang_format_fallbackStyle": "Chromium",
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}\\build\\Debug\\compile_commands.json"
+}

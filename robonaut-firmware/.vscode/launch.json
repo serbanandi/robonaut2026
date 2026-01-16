@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "STM32 Debug (Attach)",
+            "type": "cortex-debug",
+            "request": "attach",
+            "servertype": "stlink",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/Appli/build/Debug/${config:stm32.projectName}_Appli.elf",
+            "device": "${config:stm32.device}",
+            "svdFile": "${config:stm32.svdPath}",
+            "stm32cubeprogrammer": "${config:stm32.programmerPath}",
+            "postAttachCommands": [
+                "delete mem", // Clear existing maps (easiest way to fix overlap)
+                "mem 0x70000000 0x7FFFFFFF ro", // Force ExtFlash to be Read-Only
+                "mem 0x00000000 0x6FFFFFFF rw nocache", // Force SRAM+InternalFlash to be Read-Write
+                "set breakpoint auto-hw on", // Safety: tell GDB to prefer HW breakpoints
+            ],
+            "serverArgs": [
+                "-s",
+                "-k",
+                "-m",
+                "1",
+            ],
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+            "gdbPath": "arm-none-eabi-gdb"
+        }
+    ]
+}
