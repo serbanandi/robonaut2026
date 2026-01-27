@@ -49,3 +49,9 @@ void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef* hi2c)
     void* tmp = (void*) hi2c;
     _int_triggerCbs(INT_I2C_MEM_TX_CPLT, tmp);
 }
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
+{
+    void* tmp = (void*) htim;
+    _int_triggerCbs(INT_TIM_IC_CAPTURE, tmp);
+}

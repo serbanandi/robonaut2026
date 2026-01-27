@@ -31,6 +31,8 @@ float I_GAIN = 0.005f;
 float D_GAIN = 0.0f;
 uint16_t controlPeriodUs = 5000; // 5 ms
 
+extern bool ui_RC_Trigger_Pulled;
+
 // static line_SplitInfoType lineSelectionFunc(int) {
 //     static line_SplitInfoType lineSplitInfos[] = {
 //         { LINE_SPLIT_RIGHT, 2 },
@@ -128,6 +130,7 @@ void sys_Run(void)
     static bool targetReached;
     static uint32_t allblack_enc = 0;
 
+    tel_RegisterR(&ui_RC_Trigger_Pulled, TEL_UINT8, "sys_RC_Trigger_Pulled", 100);
     tel_RegisterR(&encoderPos, TEL_UINT32, "sys_encoderPos", 100);
     tel_RegisterR(&encoderSpeed, TEL_FLOAT, "sys_encoderSpeed", 100);
     tel_RegisterR(&totalProcessTimeUs, TEL_UINT16, "sys_totalProcessTimeUs", 100);

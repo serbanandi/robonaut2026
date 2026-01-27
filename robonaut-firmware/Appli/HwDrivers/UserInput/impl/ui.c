@@ -1,5 +1,7 @@
+#include "ui.h"
 #include <stdint.h>
 #include "../ui_interface.h"
+#include "IntHandler/int_interface.h"
 #include "main.h"
 
 static ui_StateType currentState = { 0 };
@@ -12,7 +14,16 @@ static uint32_t lastEnterButtonPressTime = 0;
 static uint32_t lastBackButtonPressTime = 0;
 static uint32_t lastKnobButtonPressTime = 0;
 
-void ui_Init(void) {}
+bool ui_RC_Trigger_Pulled;
+
+void ui_Init(void)
+{
+    // register callback for PWM timer
+    int_SubscribeToInt(INT_TIM_IC_CAPTURE, (int_CallbackFn) _ui_TimerCaptureCallback, UI_REMOTE_CONTROL_TIMER,
+                       UI_REMOTE_CONTROL_TIMER);
+    // start timer
+    HAL_TIM_IC_Start_IT(UI_REMOTE_CONTROL_TIMER, TIM_CHANNEL_1);
+}
 
 void ui_Process()
 {
@@ -105,6 +116,41 @@ void ui_GetButtonState(ui_StateType* state)
     currentState.enterButtonWasPressed = false;
     currentState.backButtonWasPressed = false;
     currentState.knobButtonWasPressed = false;
+}
+
+void _ui_TimerCaptureCallback(void* timerHandle)
+{
+    TIM_HandleTypeDef* htim = (TIM_HandleTypeDef*) timerHandle;
+    static uint32_t last_capture = 0;
+    static uint32_t pulse_width = 0;
+    if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+    {
+        uint32_t current_capture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+
+        // Calculate duration between this edge and the last edge, handling overflow
+        uint32_t diff;
+        if (current_capture >= last_capture)
+        {
+            diff = current_capture - last_capture;
+        }
+        else
+        {
+            // Timer overflowed, add the timer period to account for wraparound
+            diff = (htim->Init.Period - last_capture) + current_capture;
+        }
+
+        // Check Pin State to see what we just measured
+        // If Pin is LOW now, we just finished the HIGH pulse (Falling Edge)
+        if (HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_1) == GPIO_PIN_RESET)
+        {
+            pulse_width = diff; // This is your pulse width in timer ticks
+            // Determine if trigger is pulled based on pulse width, pulled --> <1000us
+            ui_RC_Trigger_Pulled = (pulse_width > 1800);
+        }
+
+        // Update last capture for next time
+        last_capture = current_capture;
+    }
 }
 
 int32_t ui_GetEncoderPosition()
