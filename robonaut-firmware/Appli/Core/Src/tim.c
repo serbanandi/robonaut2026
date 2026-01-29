@@ -296,7 +296,7 @@ void MX_TIM13_Init(void)
   {
     Error_Handler();
   }
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_BOTHEDGE;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
   sConfigIC.ICFilter = 0;
@@ -545,6 +545,9 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     GPIO_InitStruct.Alternate = GPIO_AF10_TIM13;
     HAL_GPIO_Init(RX_PWM_GPIO_Port, &GPIO_InitStruct);
 
+    /* TIM13 interrupt Init */
+    HAL_NVIC_SetPriority(TIM13_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(TIM13_IRQn);
   /* USER CODE BEGIN TIM13_MspInit 1 */
 
   /* USER CODE END TIM13_MspInit 1 */
@@ -793,6 +796,8 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
     */
     HAL_GPIO_DeInit(RX_PWM_GPIO_Port, RX_PWM_Pin);
 
+    /* TIM13 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM13_IRQn);
   /* USER CODE BEGIN TIM13_MspDeInit 1 */
 
   /* USER CODE END TIM13_MspDeInit 1 */

@@ -63,6 +63,7 @@ extern DMA_QListTypeDef List_GPDMA1_Channel3;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel3;
 extern I2C_HandleTypeDef hi2c1;
 extern TIM_HandleTypeDef htim7;
+extern TIM_HandleTypeDef htim13;
 extern TIM_HandleTypeDef htim17;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel1;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel0;
@@ -320,6 +321,20 @@ void TIM7_IRQHandler(void)
   /* USER CODE BEGIN TIM7_IRQn 1 */
 
   /* USER CODE END TIM7_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM13 global interrupt.
+  */
+void TIM13_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM13_IRQn 0 */
+
+  /* USER CODE END TIM13_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim13);
+  /* USER CODE BEGIN TIM13_IRQn 1 */
+
+  /* USER CODE END TIM13_IRQn 1 */
 }
 
 /**
