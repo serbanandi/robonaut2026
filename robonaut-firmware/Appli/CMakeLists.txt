@@ -77,6 +77,7 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Utils/IntHandler/impl/int_listManager.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Utils/Telemetry/impl/tel.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Utils/MicroTimer/impl/mt.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Utils/RadioControl/impl/rc.c
 )
 
 set(HW_DRIVER_SOURCES

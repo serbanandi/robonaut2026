@@ -225,6 +225,11 @@ void PeriphCommonClock_Config(void)
   {
     Error_Handler();
   }
+  /* set GPDMA1 channel 4 used by UART8 */
+  if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel4,DMA_CHANNEL_SEC|DMA_CHANNEL_PRIV|DMA_CHANNEL_SRC_SEC|DMA_CHANNEL_DEST_SEC)!= HAL_OK )
+  {
+    Error_Handler();
+  }
 
 /* USER CODE BEGIN RIF_Init 1 */
 
