@@ -33,6 +33,9 @@ static drv_ControlParamsType telVar_currentDrvParams = {
 static float telVar_currentMaxPower = 0.4f;
 static uint32_t telVar_maxEncoderCps = 300000; // 300k counts per second for now, TODO: tune properly
 
+static uint32_t telVar_encoderPos = 0;
+static float telVar_encoderSpeed = 0.0f;
+
 void sys_Init(void)
 {
     // npu_cache_enable();
@@ -51,11 +54,7 @@ void sys_Init(void)
     // imu_init(&_sys_imuInstance, &hspi2, IMU_CS_GPIO_Port, IMU_CS_Pin,
     // SPI2_IRQn, &htim18); imu_setDefaultSettings(&_sys_imuInstance);
 
-    // CTRL_InitLoop();
-    // tuning_Init(&tuning_params);
-    // test_Init();
-
-    // test_Init();
+    test_Init();
 
     _sys_RegisterTelemetryVariables();
 
@@ -76,6 +75,8 @@ void _sys_RegisterTelemetryVariables(void)
     tel_RegisterRW(&telVar_currentDrvParams.periodUs, TEL_UINT32, "drv_periodUs", 1000);
     tel_RegisterRW(&telVar_currentMaxPower, TEL_FLOAT, "drv_maxPower", 1000);
     tel_RegisterRW(&telVar_maxEncoderCps, TEL_UINT32, "drv_maxEncoderCps", 1000);
+    tel_RegisterR(&telVar_encoderPos, TEL_UINT32, "drv_encoderPos", 200);
+    tel_RegisterR(&telVar_encoderSpeed, TEL_FLOAT, "drv_encoderSpeed", 200);
 }
 
 void _sys_HandleParamTuning(void)
@@ -83,4 +84,6 @@ void _sys_HandleParamTuning(void)
     drv_SetControlParams(&telVar_currentDrvParams);
     drv_SetMaxPower(telVar_currentMaxPower);
     drv_SetMaxEncoderCps(telVar_maxEncoderCps);
+    telVar_encoderPos = drv_GetEncoderCount();
+    telVar_encoderSpeed = drv_GetEncoderSpeed();
 }

@@ -327,6 +327,8 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
 
         /* USER CODE BEGIN ADC1_MspInit 1 */
 
+        HAL_PWREx_EnableVddA();
+
         /* USER CODE END ADC1_MspInit 1 */
     }
     else if (adcHandle->Instance == ADC2)

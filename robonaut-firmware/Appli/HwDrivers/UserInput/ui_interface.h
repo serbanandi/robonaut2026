@@ -19,4 +19,6 @@ void ui_GetButtonState(ui_StateType* state);
 
 int32_t ui_GetEncoderPosition();
 
+bool ui_GetRCTriggerState();
+
 #endif // UI_INTERFACE_H

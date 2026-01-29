@@ -70,6 +70,7 @@ set(CONTROL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Control/LineProcessor/impl/line.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Control/System/impl/sys_init.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Control/System/impl/sys_main.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Control/HwTest/impl/test.c
 )
 
 set(UTIL_SOURCES

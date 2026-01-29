@@ -4,17 +4,17 @@
 #include "IntHandler/int_interface.h"
 #include "main.h"
 
-static ui_StateType currentState = { 0 };
-static int32_t encoderPosition = 0;
+static ui_StateType _ui_currentState = { 0 };
+static int32_t _ui_encoderPosition = 0;
 
-static bool enterButtonIsPressed = false;
-static bool backButtonIsPressed = false;
-static bool knobButtonIsPressed = false;
-static uint32_t lastEnterButtonPressTime = 0;
-static uint32_t lastBackButtonPressTime = 0;
-static uint32_t lastKnobButtonPressTime = 0;
+static bool _ui_enterButtonIsPressed = false;
+static bool _ui_backButtonIsPressed = false;
+static bool _ui_knobButtonIsPressed = false;
+static uint32_t _ui_lastEnterButtonPressTime = 0;
+static uint32_t _ui_lastBackButtonPressTime = 0;
+static uint32_t _ui_lastKnobButtonPressTime = 0;
 
-bool ui_RC_Trigger_Pulled;
+static volatile bool _ui_RC_Trigger_Pulled = false;
 
 void ui_Init(void)
 {
@@ -44,11 +44,11 @@ void ui_Process()
             {
                 if (currentB == 0)
                 {
-                    encoderPosition++;
+                    _ui_encoderPosition++;
                 }
                 else
                 {
-                    encoderPosition--;
+                    _ui_encoderPosition--;
                 }
                 lastEncoderDebounceTime = now;
             }
@@ -58,11 +58,11 @@ void ui_Process()
     // {
     //     if (currentB == 0)
     //     {
-    //         encoderPosition++;
+    //         _ui_encoderPosition++;
     //     }
     //     else
     //     {
-    //         encoderPosition--;
+    //         _ui_encoderPosition--;
     //     }
     // }
 
@@ -72,38 +72,38 @@ void ui_Process()
     bool backPressed = HAL_GPIO_ReadPin(UI_BACK_GPIO_Port, UI_BACK_Pin) == GPIO_PIN_RESET;
     bool knobPressed = HAL_GPIO_ReadPin(UI_PUSH_GPIO_Port, UI_PUSH_Pin) == GPIO_PIN_RESET;
     uint32_t currentTime = HAL_GetTick();
-    if (enterPressed && !enterButtonIsPressed && (currentTime - lastEnterButtonPressTime) > 40)
+    if (enterPressed && !_ui_enterButtonIsPressed && (currentTime - _ui_lastEnterButtonPressTime) > 40)
     {
-        currentState.enterButtonWasPressed = true;
-        enterButtonIsPressed = true;
-        lastEnterButtonPressTime = currentTime;
+        _ui_currentState.enterButtonWasPressed = true;
+        _ui_enterButtonIsPressed = true;
+        _ui_lastEnterButtonPressTime = currentTime;
     }
-    else if (!enterPressed && enterButtonIsPressed && (currentTime - lastEnterButtonPressTime) > 80)
+    else if (!enterPressed && _ui_enterButtonIsPressed && (currentTime - _ui_lastEnterButtonPressTime) > 80)
     {
-        enterButtonIsPressed = false;
-        lastEnterButtonPressTime = currentTime;
+        _ui_enterButtonIsPressed = false;
+        _ui_lastEnterButtonPressTime = currentTime;
     }
-    if (backPressed && !backButtonIsPressed && (currentTime - lastBackButtonPressTime) > 40)
+    if (backPressed && !_ui_backButtonIsPressed && (currentTime - _ui_lastBackButtonPressTime) > 40)
     {
-        currentState.backButtonWasPressed = true;
-        backButtonIsPressed = true;
-        lastBackButtonPressTime = currentTime;
+        _ui_currentState.backButtonWasPressed = true;
+        _ui_backButtonIsPressed = true;
+        _ui_lastBackButtonPressTime = currentTime;
     }
-    else if (!backPressed && backButtonIsPressed && (currentTime - lastBackButtonPressTime) > 80)
+    else if (!backPressed && _ui_backButtonIsPressed && (currentTime - _ui_lastBackButtonPressTime) > 80)
     {
-        backButtonIsPressed = false;
-        lastBackButtonPressTime = currentTime;
+        _ui_backButtonIsPressed = false;
+        _ui_lastBackButtonPressTime = currentTime;
     }
-    if (knobPressed && !knobButtonIsPressed && (currentTime - lastKnobButtonPressTime) > 40)
+    if (knobPressed && !_ui_knobButtonIsPressed && (currentTime - _ui_lastKnobButtonPressTime) > 40)
     {
-        currentState.knobButtonWasPressed = true;
-        knobButtonIsPressed = true;
-        lastKnobButtonPressTime = currentTime;
+        _ui_currentState.knobButtonWasPressed = true;
+        _ui_knobButtonIsPressed = true;
+        _ui_lastKnobButtonPressTime = currentTime;
     }
-    else if (!knobPressed && knobButtonIsPressed && (currentTime - lastKnobButtonPressTime) > 80)
+    else if (!knobPressed && _ui_knobButtonIsPressed && (currentTime - _ui_lastKnobButtonPressTime) > 80)
     {
-        knobButtonIsPressed = false;
-        lastKnobButtonPressTime = currentTime;
+        _ui_knobButtonIsPressed = false;
+        _ui_lastKnobButtonPressTime = currentTime;
     }
 }
 
@@ -111,11 +111,11 @@ void ui_GetButtonState(ui_StateType* state)
 {
     if (state != NULL)
     {
-        *state = currentState;
+        *state = _ui_currentState;
     }
-    currentState.enterButtonWasPressed = false;
-    currentState.backButtonWasPressed = false;
-    currentState.knobButtonWasPressed = false;
+    _ui_currentState.enterButtonWasPressed = false;
+    _ui_currentState.backButtonWasPressed = false;
+    _ui_currentState.knobButtonWasPressed = false;
 }
 
 void _ui_TimerCaptureCallback(void* timerHandle)
@@ -145,7 +145,7 @@ void _ui_TimerCaptureCallback(void* timerHandle)
         {
             pulse_width = diff; // This is your pulse width in timer ticks
             // Determine if trigger is pulled based on pulse width, pulled --> <1000us
-            ui_RC_Trigger_Pulled = (pulse_width > 1800);
+            _ui_RC_Trigger_Pulled = (pulse_width > 1800);
         }
 
         // Update last capture for next time
@@ -155,5 +155,10 @@ void _ui_TimerCaptureCallback(void* timerHandle)
 
 int32_t ui_GetEncoderPosition()
 {
-    return encoderPosition;
+    return _ui_encoderPosition;
+}
+
+bool ui_GetRCTriggerState()
+{
+    return _ui_RC_Trigger_Pulled;
 }

@@ -35,7 +35,6 @@ uint16_t controlPeriodUs = 5000; // 5 ms
 rc_PositionType latestPosition;
 rc_RxStateType rc_currentRxState;
 
-static anlg_BatteryStatusType batteryStatus;
 extern bool ui_RC_Trigger_Pulled;
 
 bool next = false;
@@ -101,6 +100,9 @@ static void _sys_displayStatus()
     static uint32_t lastStatusTime = 0;
     if (HAL_GetTick() - lastStatusTime >= 250)
     {
+        anlg_BatteryStatusType batteryStatus;
+        anlg_ReadBatteryStatus(&batteryStatus);
+
         lastStatusTime = HAL_GetTick();
         ssd1306_Fill(0);
         ssd1306_SetCursor(0, 0);
@@ -119,21 +121,11 @@ static void _sys_displayStatus()
 
 void sys_Run(void)
 {
-    static uint32_t encoderPos;
-    static float encoderSpeed;
     static uint16_t totalProcessTimeUs;
     static bool targetReached;
     static uint32_t allblack_enc = 0;
 
-    tel_RegisterR(&ui_RC_Trigger_Pulled, TEL_UINT8, "sys_RC_Trigger_Pulled", 100);
-    tel_RegisterR(&encoderPos, TEL_UINT32, "sys_encoderPos", 100);
-    tel_RegisterR(&encoderSpeed, TEL_FLOAT, "sys_encoderSpeed", 100);
     tel_RegisterR(&totalProcessTimeUs, TEL_UINT16, "sys_totalProcessTimeUs", 100);
-    tel_RegisterR(&rc_currentRxState, TEL_UINT8, "rc_currentRxState", 200);
-    tel_RegisterR(&latestPosition.fromNode, TEL_UINT8, "rc_fromNode", 200);
-    tel_RegisterR(&latestPosition.toNode, TEL_UINT8, "rc_toNode", 200);
-    tel_RegisterR(&latestPosition.nextNode, TEL_UINT8, "rc_nextNode", 200);
-    tel_RegisterR(&latestPosition.positionPercent, TEL_UINT8, "rc_positionPercent", 200);
     tel_RegisterRW(&controlPeriodUs, TEL_UINT16, "sys_controlPeriodUs", 1000);
     tel_RegisterRW(&MAGIC_ENABLED, TEL_UINT8, "sys_ENABLE", 400);
     tel_RegisterRW(&slowSpeed, TEL_FLOAT, "sys_slowSpeed", 400);
@@ -146,76 +138,22 @@ void sys_Run(void)
     tel_RegisterRW(&pathIndex, TEL_UINT8, "sys_pathIndex", 400);
     tel_RegisterRW(&lineSplitIndex, TEL_UINT8, "sys_lineSplitIndex", 400);
     tel_RegisterRW(&encoderDiff, TEL_UINT32, "sys_encoderDiff", 400);
-    tel_RegisterR(&batteryStatus.motorBatteryVoltage, TEL_FLOAT, "sys_auxBatteryVoltage", 1000);
-    tel_RegisterR(&batteryStatus.auxBatteryVoltage, TEL_FLOAT, "sys_batteryVoltage", 1000);
-    tel_RegisterR(&batteryStatus.motorShuntVoltage, TEL_FLOAT, "sys_motorShuntVoltage", 1000);
 
     tel_Log(TEL_LOG_INFO, "Entering main loop...");
 
-    // while (1)
-    // {
-    //     _sys_HandleParamTuning();
-    //     encoderPos = drv_GetEncoderCount();
-    //     encoderSpeed = drv_GetEncoderSpeed();
-
-    //     test_ProcessAll();
-    //     tel_Process();
-
-    //     static uint32_t lastBlinkTime = 0;
-    //     if (HAL_GetTick() - lastBlinkTime >= 500)
-    //     {
-    //         lastBlinkTime = HAL_GetTick();
-    //         BSP_LED_Toggle(LED1);
-    //     }
-    // }
-
     while (1)
     {
-        int32_t processingStartUs = mt_GetTick();
         _sys_HandleParamTuning();
-        encoderPos = drv_GetEncoderCount();
-        encoderSpeed = drv_GetEncoderSpeed();
-        anlg_ReadBatteryStatus(&batteryStatus);
         tel_Process();
-        bool newDataAvailable = false;
-        ls_Process(&newDataAvailable);
         rc_Process();
-        rc_currentRxState = rc_GetRxState();
-        rc_GetPosition(&latestPosition);
+        ui_Process();
+        ls_Process();
 
-        /* RC test code
-        // print rc state and position data to ssd1306
-        ssd1306_Fill(0);
-        ssd1306_SetCursor(0, 0);
-        ssd1306_WriteString("RC State:", Font_6x8, 0);
-        char buf[20];
-        sprintf(buf, "%d", rc_currentRxState);
-        ssd1306_SetCursor(80, 0);
-        ssd1306_WriteString(buf, Font_6x8, 0);
-        ssd1306_SetCursor(0, 20);
-        ssd1306_WriteString("From:", Font_6x8, 0);
-        sprintf(buf, "%c", latestPosition.fromNode);
-        ssd1306_SetCursor(50, 20);
-        ssd1306_WriteString(buf, Font_6x8, 0);
-        ssd1306_SetCursor(0, 30);
-        ssd1306_WriteString("To:", Font_6x8, 0);
-        sprintf(buf, "%c", latestPosition.toNode);
-        ssd1306_SetCursor(50, 30);
-        ssd1306_WriteString(buf, Font_6x8, 0);
-        ssd1306_SetCursor(0, 40);
-        ssd1306_WriteString("Next:", Font_6x8, 0);
-        sprintf(buf, "%c", latestPosition.nextNode);
-        ssd1306_SetCursor(50, 40);
-        ssd1306_WriteString(buf, Font_6x8, 0);
-        ssd1306_SetCursor(0, 50);
-        ssd1306_WriteString("Progress:", Font_6x8, 0);
-        sprintf(buf, "%d", latestPosition.positionPercent);
-        ssd1306_SetCursor(60, 50);
-        ssd1306_WriteString(buf, Font_6x8, 0);
-        ssd1306_UpdateScreen();
-        */
+        test_ProcessAll();
 
-        _sys_displayStatus();
+        //_sys_displayStatus();
+        // bool newDataAvailable = false;
+        // ls_Process(&newDataAvailable);
 
         // if (BSP_PB_GetState(BUTTON_USER) == GPIO_PIN_SET)
         // {

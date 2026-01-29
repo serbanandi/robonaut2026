@@ -9,6 +9,7 @@ static ls_AdcValuesType _ls_lastAdcValues[2]; // 0: front, 1: rear
 static _ls_StateType _ls_state = _LS_STATE_IDLE;
 static uint32_t _ls_readIndex = 0;
 static uint16_t _ls_waitStartUs = 0;
+static bool _ls_newDataAvailable = false;
 
 static void _ls_ADCSetCS(_ls_CSType cs)
 {
@@ -182,9 +183,8 @@ void ls_GetADCValues(ls_AdcValuesType* adc_values, const ls_SensorPositionType s
     *adc_values = _ls_lastAdcValues[sensor];
 }
 
-bool ls_Process(bool* newDataAvailable)
+bool ls_Process()
 {
-    *newDataAvailable = false;
     switch (_ls_state)
     {
         case _LS_STATE_IDLE:
@@ -225,7 +225,7 @@ bool ls_Process(bool* newDataAvailable)
                 if (_ls_readIndex >= 8)
                 {
                     _ls_state = _LS_STATE_IDLE;
-                    *newDataAvailable = true;
+                    _ls_newDataAvailable = true;
                     bool adcFrontValid = _ls_ValidateADC(LS_SENSOR_FRONT);
                     bool adcRearValid = _ls_ValidateADC(LS_SENSOR_REAR);
                     return adcFrontValid && adcRearValid;
@@ -239,4 +239,14 @@ bool ls_Process(bool* newDataAvailable)
         }
     }
     return true;
+}
+
+bool ls_IsNewDataAvailable()
+{
+    return _ls_newDataAvailable;
+}
+
+void ls_ClearNewDataFlag()
+{
+    _ls_newDataAvailable = false;
 }

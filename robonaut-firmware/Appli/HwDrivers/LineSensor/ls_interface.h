@@ -22,10 +22,14 @@ typedef struct
 
 bool ls_Init(void);
 
-bool ls_Process(bool* newDataAvailable);
+bool ls_Process();
 
 void ls_GetADCValues(ls_AdcValuesType* values, const ls_SensorPositionType sensor);
 
 bool ls_SetFbLEDs(const ls_LedValuesType* values, const ls_SensorPositionType sensor);
+
+bool ls_IsNewDataAvailable();
+
+void ls_ClearNewDataFlag();
 
 #endif /* LS_INTERFACE_H_ */
