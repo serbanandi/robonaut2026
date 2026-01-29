@@ -15,6 +15,7 @@
 #include "LineProcessor/line_interface.h"
 #include "LineSensor/LineSensor.h"
 #include "MicroTimer/MicroTimer.h"
+#include "RadioControl/rc_interface.h"
 #include "SSD1306/ssd1306_fonts.h"
 #include "SSD1306/ssd1306_interface.h"
 #include "Servo/servo_interface.h"
@@ -49,6 +50,7 @@ void sys_Init(void)
     servo_Init();
     drv_Init(&telVar_currentDrvParams, telVar_currentMaxPower, telVar_maxEncoderCps);
     line_Init();
+    rc_Init();
     // imu_init(&_sys_imuInstance, &hspi2, IMU_CS_GPIO_Port, IMU_CS_Pin,
     // SPI2_IRQn, &htim18); imu_setDefaultSettings(&_sys_imuInstance);
 
