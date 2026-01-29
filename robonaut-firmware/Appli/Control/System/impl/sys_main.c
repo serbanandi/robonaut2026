@@ -10,6 +10,7 @@
 #include "HwTest/test_interface.h"
 #include "LineController/lc_interface.h"
 #include "LineProcessor/line_interface.h"
+#include "RadioControl/rc_interface.h"
 #include "SSD1306/ssd1306_fonts.h"
 #include "SSD1306/ssd1306_interface.h"
 #include "Servo/servo_interface.h"
@@ -30,6 +31,8 @@ float P_GAIN = 0.2f;
 float I_GAIN = 0.005f;
 float D_GAIN = 0.0f;
 uint16_t controlPeriodUs = 5000; // 5 ms
+rc_PositionType latestPosition;
+rc_RxStateType rc_currentRxState;
 
 extern bool ui_RC_Trigger_Pulled;
 
@@ -134,6 +137,11 @@ void sys_Run(void)
     tel_RegisterR(&encoderPos, TEL_UINT32, "sys_encoderPos", 100);
     tel_RegisterR(&encoderSpeed, TEL_FLOAT, "sys_encoderSpeed", 100);
     tel_RegisterR(&totalProcessTimeUs, TEL_UINT16, "sys_totalProcessTimeUs", 100);
+    tel_RegisterR(&rc_currentRxState, TEL_UINT8, "rc_currentRxState", 200);
+    tel_RegisterR(&latestPosition.fromNode, TEL_UINT8, "rc_fromNode", 200);
+    tel_RegisterR(&latestPosition.toNode, TEL_UINT8, "rc_toNode", 200);
+    tel_RegisterR(&latestPosition.nextNode, TEL_UINT8, "rc_nextNode", 200);
+    tel_RegisterR(&latestPosition.positionPercent, TEL_UINT8, "rc_positionPercent", 200);
     tel_RegisterRW(&controlPeriodUs, TEL_UINT16, "sys_controlPeriodUs", 1000);
     tel_RegisterRW(&MAGIC_ENABLED, TEL_UINT8, "sys_ENABLE", 400);
     tel_RegisterRW(&slowSpeed, TEL_FLOAT, "sys_slowSpeed", 400);
@@ -173,6 +181,41 @@ void sys_Run(void)
         encoderPos = drv_GetEncoderCount();
         encoderSpeed = drv_GetEncoderSpeed();
         tel_Process();
+        rc_Process();
+        rc_currentRxState = rc_GetRxState();
+        rc_GetPosition(&latestPosition);
+
+        /* RC test code
+        // print rc state and position data to ssd1306
+        ssd1306_Fill(0);
+        ssd1306_SetCursor(0, 0);
+        ssd1306_WriteString("RC State:", Font_6x8, 0);
+        char buf[20];
+        sprintf(buf, "%d", rc_currentRxState);
+        ssd1306_SetCursor(80, 0);
+        ssd1306_WriteString(buf, Font_6x8, 0);
+        ssd1306_SetCursor(0, 20);
+        ssd1306_WriteString("From:", Font_6x8, 0);
+        sprintf(buf, "%c", latestPosition.fromNode);
+        ssd1306_SetCursor(50, 20);
+        ssd1306_WriteString(buf, Font_6x8, 0);
+        ssd1306_SetCursor(0, 30);
+        ssd1306_WriteString("To:", Font_6x8, 0);
+        sprintf(buf, "%c", latestPosition.toNode);
+        ssd1306_SetCursor(50, 30);
+        ssd1306_WriteString(buf, Font_6x8, 0);
+        ssd1306_SetCursor(0, 40);
+        ssd1306_WriteString("Next:", Font_6x8, 0);
+        sprintf(buf, "%c", latestPosition.nextNode);
+        ssd1306_SetCursor(50, 40);
+        ssd1306_WriteString(buf, Font_6x8, 0);
+        ssd1306_SetCursor(0, 50);
+        ssd1306_WriteString("Progress:", Font_6x8, 0);
+        sprintf(buf, "%d", latestPosition.positionPercent);
+        ssd1306_SetCursor(60, 50);
+        ssd1306_WriteString(buf, Font_6x8, 0);
+        ssd1306_UpdateScreen();
+        */
 
         static uint32_t lastBlinkTime = 0;
         if (HAL_GetTick() - lastBlinkTime >= 500)
