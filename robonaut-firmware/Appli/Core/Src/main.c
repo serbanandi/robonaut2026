@@ -22,11 +22,13 @@
 #include "cacheaxi.h"
 #include "dcmipp.h"
 #include "gpdma.h"
+#include "hpdma.h"
 #include "i2c.h"
 #include "ramcfg.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
+#include "usb_otg.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -103,6 +105,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_GPDMA1_Init();
+  MX_HPDMA1_Init();
   MX_DCMIPP_Init();
   MX_RAMCFG_Init();
   MX_I2C4_Init();
@@ -124,8 +127,9 @@ int main(void)
   MX_TIM17_Init();
   MX_TIM14_Init();
   MX_TIM7_Init();
-  MX_ADC1_Init();
   MX_ADC2_Init();
+  MX_ADC1_Init();
+  MX_USB1_OTG_HS_PCD_Init();
   SystemIsolation_Config();
   /* USER CODE BEGIN 2 */
 
@@ -203,6 +207,13 @@ void PeriphCommonClock_Config(void)
   __HAL_RCC_RIFSC_CLK_ENABLE();
 
   /* RIF-Aware IPs Config */
+
+  /* set up HPDMA configuration */
+  /* set HPDMA1 channel 15 used by HPDMA1 */
+  if (HAL_DMA_ConfigChannelAttributes(&handle_HPDMA1_Channel15,DMA_CHANNEL_SEC|DMA_CHANNEL_PRIV|DMA_CHANNEL_SRC_SEC|DMA_CHANNEL_DEST_SEC)!= HAL_OK )
+  {
+    Error_Handler();
+  }
 
   /* set up GPDMA configuration */
   /* set GPDMA1 channel 0 used by USART3 */

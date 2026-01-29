@@ -55,12 +55,14 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern DMA_HandleTypeDef handle_HPDMA1_Channel15;
 extern DMA_NodeTypeDef Node_GPDMA1_Channel2;
 extern DMA_QListTypeDef List_GPDMA1_Channel2;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel2;
 extern DMA_NodeTypeDef Node_GPDMA1_Channel3;
 extern DMA_QListTypeDef List_GPDMA1_Channel3;
 extern DMA_HandleTypeDef handle_GPDMA1_Channel3;
+extern DCMIPP_HandleTypeDef hdcmipp;
 extern I2C_HandleTypeDef hi2c1;
 extern TIM_HandleTypeDef htim7;
 extern TIM_HandleTypeDef htim13;
@@ -239,6 +241,34 @@ void EXTI13_IRQHandler(void)
   /* USER CODE BEGIN EXTI13_IRQn 1 */
 
   /* USER CODE END EXTI13_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DCMIPP global interrupt.
+  */
+void DCMIPP_IRQHandler(void)
+{
+  /* USER CODE BEGIN DCMIPP_IRQn 0 */
+
+  /* USER CODE END DCMIPP_IRQn 0 */
+  HAL_DCMIPP_IRQHandler(&hdcmipp);
+  /* USER CODE BEGIN DCMIPP_IRQn 1 */
+
+  /* USER CODE END DCMIPP_IRQn 1 */
+}
+
+/**
+  * @brief This function handles HPDMA1 Channel 15 global interrupt.
+  */
+void HPDMA1_Channel15_IRQHandler(void)
+{
+  /* USER CODE BEGIN HPDMA1_Channel15_IRQn 0 */
+
+  /* USER CODE END HPDMA1_Channel15_IRQn 0 */
+  HAL_DMA_IRQHandler(&handle_HPDMA1_Channel15);
+  /* USER CODE BEGIN HPDMA1_Channel15_IRQn 1 */
+
+  /* USER CODE END HPDMA1_Channel15_IRQn 1 */
 }
 
 /**

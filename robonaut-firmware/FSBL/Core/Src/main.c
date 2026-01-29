@@ -21,6 +21,7 @@
 #include "bsec.h"
 #include "extmem_manager.h"
 #include "gpdma.h"
+#include "hpdma.h"
 #include "xspi.h"
 #include "xspim.h"
 #include "gpio.h"
@@ -103,10 +104,11 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  MX_GPIO_Init();
   MX_GPDMA1_Init();
-  MX_XSPI2_Init();
+  MX_HPDMA1_Init();
+  MX_GPIO_Init();
   MX_BSEC_Init();
+  MX_XSPI2_Init();
   SystemIsolation_Config();
   MX_EXTMEM_MANAGER_Init();
   /* USER CODE BEGIN 2 */
@@ -182,23 +184,31 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_NONE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL1.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL1.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL1.PLLM = 4;
+  RCC_OscInitStruct.PLL1.PLLM = 2;
   RCC_OscInitStruct.PLL1.PLLN = 75;
   RCC_OscInitStruct.PLL1.PLLFractional = 0;
-  RCC_OscInitStruct.PLL1.PLLP1 = 1;
-  RCC_OscInitStruct.PLL1.PLLP2 = 1;
-  RCC_OscInitStruct.PLL2.PLLState = RCC_PLL_NONE;
-  RCC_OscInitStruct.PLL3.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL3.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL3.PLLM = 1;
-  RCC_OscInitStruct.PLL3.PLLN = 25;
-  RCC_OscInitStruct.PLL3.PLLFractional = 0;
-  RCC_OscInitStruct.PLL3.PLLP1 = 1;
-  RCC_OscInitStruct.PLL3.PLLP2 = 1;
-  RCC_OscInitStruct.PLL4.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL1.PLLP1 = 2;
+  RCC_OscInitStruct.PLL1.PLLP2 = 2;
+  RCC_OscInitStruct.PLL2.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL2.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL2.PLLM = 4;
+  RCC_OscInitStruct.PLL2.PLLN = 125;
+  RCC_OscInitStruct.PLL2.PLLFractional = 0;
+  RCC_OscInitStruct.PLL2.PLLP1 = 1;
+  RCC_OscInitStruct.PLL2.PLLP2 = 2;
+  RCC_OscInitStruct.PLL3.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL4.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL4.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL4.PLLM = 1;
+  RCC_OscInitStruct.PLL4.PLLN = 25;
+  RCC_OscInitStruct.PLL4.PLLFractional = 0;
+  RCC_OscInitStruct.PLL4.PLLP1 = 1;
+  RCC_OscInitStruct.PLL4.PLLP2 = 2;
+
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -212,19 +222,19 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK4;
   RCC_ClkInitStruct.CPUCLKSource = RCC_CPUCLKSOURCE_IC1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_IC2_IC6_IC11;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV1;
   RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV1;
   RCC_ClkInitStruct.APB5CLKDivider = RCC_APB5_DIV1;
   RCC_ClkInitStruct.IC1Selection.ClockSelection = RCC_ICCLKSOURCE_PLL1;
-  RCC_ClkInitStruct.IC1Selection.ClockDivider = 2;
-  RCC_ClkInitStruct.IC2Selection.ClockSelection = RCC_ICCLKSOURCE_PLL1;
-  RCC_ClkInitStruct.IC2Selection.ClockDivider = 3;
-  RCC_ClkInitStruct.IC6Selection.ClockSelection = RCC_ICCLKSOURCE_PLL3;
-  RCC_ClkInitStruct.IC6Selection.ClockDivider = 2;
-  RCC_ClkInitStruct.IC11Selection.ClockSelection = RCC_ICCLKSOURCE_PLL3;
-  RCC_ClkInitStruct.IC11Selection.ClockDivider = 2;
+  RCC_ClkInitStruct.IC1Selection.ClockDivider = 1;
+  RCC_ClkInitStruct.IC2Selection.ClockSelection = RCC_ICCLKSOURCE_PLL4;
+  RCC_ClkInitStruct.IC2Selection.ClockDivider = 2;
+  RCC_ClkInitStruct.IC6Selection.ClockSelection = RCC_ICCLKSOURCE_PLL4;
+  RCC_ClkInitStruct.IC6Selection.ClockDivider = 1;
+  RCC_ClkInitStruct.IC11Selection.ClockSelection = RCC_ICCLKSOURCE_PLL4;
+  RCC_ClkInitStruct.IC11Selection.ClockDivider = 1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct) != HAL_OK)
   {
@@ -270,8 +280,23 @@ void PeriphCommonClock_Config(void)
 
   /*RIMC configuration*/
   HAL_RIF_RIMC_ConfigMasterAttributes(RIF_MASTER_INDEX_DCMIPP, &RIMC_master);
+  HAL_RIF_RIMC_ConfigMasterAttributes(RIF_MASTER_INDEX_DMA2D, &RIMC_master);
+
+  /*RISUP configuration*/
+  HAL_RIF_RISC_SetSlaveSecureAttributes(RIF_RISC_PERIPH_INDEX_TIM6 , RIF_ATTRIBUTE_SEC | RIF_ATTRIBUTE_PRIV);
+  HAL_RIF_RISC_SetSlaveSecureAttributes(RIF_RISC_PERIPH_INDEX_OTG1HS , RIF_ATTRIBUTE_SEC | RIF_ATTRIBUTE_PRIV);
+  HAL_RIF_RISC_SetSlaveSecureAttributes(RIF_RISC_PERIPH_INDEX_DCMIPP , RIF_ATTRIBUTE_SEC | RIF_ATTRIBUTE_PRIV);
+  HAL_RIF_RISC_SetSlaveSecureAttributes(RIF_RISC_PERIPH_INDEX_DMA2D , RIF_ATTRIBUTE_SEC | RIF_ATTRIBUTE_PRIV);
+  HAL_RIF_RISC_SetSlaveSecureAttributes(RIF_RISC_PERIPH_INDEX_NPU , RIF_ATTRIBUTE_SEC | RIF_ATTRIBUTE_PRIV);
 
   /* RIF-Aware IPs Config */
+
+  /* set up HPDMA configuration */
+  /* set HPDMA1 channel 15 used by HPDMA1 */
+  if (HAL_DMA_ConfigChannelAttributes(&handle_HPDMA1_Channel15,DMA_CHANNEL_SEC|DMA_CHANNEL_PRIV|DMA_CHANNEL_SRC_SEC|DMA_CHANNEL_DEST_SEC)!= HAL_OK )
+  {
+    Error_Handler();
+  }
 
   /* set up PWR configuration */
   HAL_PWR_ConfigAttributes(PWR_ITEM_0,PWR_SEC_NPRIV);

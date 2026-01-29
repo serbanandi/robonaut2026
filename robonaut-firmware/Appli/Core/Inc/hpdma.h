@@ -1,13 +1,13 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    ramcfg.h
+  * @file    hpdma.h
   * @brief   This file contains all the function prototypes for
-  *          the ramcfg.c file
+  *          the hpdma.c file
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2025 STMicroelectronics.
+  * Copyright (c) 2026 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -18,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __RAMCFG_H__
-#define __RAMCFG_H__
+#ifndef __HPDMA_H__
+#define __HPDMA_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,23 +32,13 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern RAMCFG_HandleTypeDef hramcfg_SRAM1;
-
-extern RAMCFG_HandleTypeDef hramcfg_SRAM2;
-
-extern RAMCFG_HandleTypeDef hramcfg_SRAM3;
-
-extern RAMCFG_HandleTypeDef hramcfg_SRAM4;
-
-extern RAMCFG_HandleTypeDef hramcfg_SRAM5;
-
-extern RAMCFG_HandleTypeDef hramcfg_SRAM6;
+extern DMA_HandleTypeDef handle_HPDMA1_Channel15;
 
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
 
-void MX_RAMCFG_Init(void);
+void MX_HPDMA1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -58,5 +48,5 @@ void MX_RAMCFG_Init(void);
 }
 #endif
 
-#endif /* __RAMCFG_H__ */
+#endif /* __HPDMA_H__ */
 

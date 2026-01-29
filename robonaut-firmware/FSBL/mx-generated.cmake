@@ -30,6 +30,7 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/bsec.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/extmem_manager.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/gpdma.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/hpdma.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/xspi.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/xspim.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/stm32n6xx_it.c

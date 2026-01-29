@@ -212,7 +212,9 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI1;
-    PeriphClkInitStruct.Spi1ClockSelection = RCC_SPI1CLKSOURCE_PCLK2;
+    PeriphClkInitStruct.Spi1ClockSelection = RCC_SPI1CLKSOURCE_IC9;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockSelection = RCC_ICCLKSOURCE_PLL2;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockDivider = 10;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -254,7 +256,9 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI2;
-    PeriphClkInitStruct.Spi2ClockSelection = RCC_SPI2CLKSOURCE_PCLK1;
+    PeriphClkInitStruct.Spi2ClockSelection = RCC_SPI2CLKSOURCE_IC9;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockSelection = RCC_ICCLKSOURCE_PLL2;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockDivider = 10;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -305,7 +309,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI4;
-    PeriphClkInitStruct.Spi4ClockSelection = RCC_SPI4CLKSOURCE_PCLK2;
+    PeriphClkInitStruct.Spi4ClockSelection = RCC_SPI4CLKSOURCE_IC9;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -340,7 +344,9 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_SPI5;
-    PeriphClkInitStruct.Spi5ClockSelection = RCC_SPI5CLKSOURCE_PCLK2;
+    PeriphClkInitStruct.Spi5ClockSelection = RCC_SPI5CLKSOURCE_IC9;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockSelection = RCC_ICCLKSOURCE_PLL2;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockDivider = 10;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();

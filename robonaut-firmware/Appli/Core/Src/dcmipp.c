@@ -35,6 +35,7 @@ void MX_DCMIPP_Init(void)
   /* USER CODE END DCMIPP_Init 0 */
 
   DCMIPP_ParallelConfTypeDef pParallelConfig = {0};
+  DCMIPP_PipeConfTypeDef pPipeConfig = {0};
 
   /* USER CODE BEGIN DCMIPP_Init 1 */
 
@@ -42,15 +43,43 @@ void MX_DCMIPP_Init(void)
 
   /** Parallel Config
   */
-  pParallelConfig.PCKPolarity = DCMIPP_PCKPOLARITY_FALLING;
+  pParallelConfig.PCKPolarity = DCMIPP_PCKPOLARITY_RISING ;
   pParallelConfig.HSPolarity = DCMIPP_HSPOLARITY_LOW ;
   pParallelConfig.VSPolarity = DCMIPP_VSPOLARITY_LOW ;
   pParallelConfig.ExtendedDataMode = DCMIPP_INTERFACE_8BITS;
-  pParallelConfig.Format = DCMIPP_FORMAT_MONOCHROME_8B;
+  pParallelConfig.Format = DCMIPP_FORMAT_RGB565;
   pParallelConfig.SwapBits = DCMIPP_SWAPBITS_DISABLE;
   pParallelConfig.SwapCycles = DCMIPP_SWAPCYCLES_DISABLE;
   pParallelConfig.SynchroMode = DCMIPP_SYNCHRO_HARDWARE;
   HAL_DCMIPP_PARALLEL_SetConfig(&hdcmipp, &pParallelConfig);
+
+  /** Pipe 0 Config
+  */
+  pPipeConfig.FrameRate = DCMIPP_FRAME_RATE_ALL;
+  pPipeConfig.PixelPipePitch = 800;
+  pPipeConfig.PixelPackerFormat = DCMIPP_PIXEL_PACKER_FORMAT_RGB565_1;
+  if (HAL_DCMIPP_PIPE_SetConfig(&hdcmipp, DCMIPP_PIPE0, &pPipeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Pipe 1 Config
+  */
+  pPipeConfig.PixelPipePitch = 768;
+  pPipeConfig.PixelPackerFormat = DCMIPP_PIXEL_PACKER_FORMAT_RGB888_YUV444_1;
+  if (HAL_DCMIPP_PIPE_SetConfig(&hdcmipp, DCMIPP_PIPE1, &pPipeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Pipe 2 Config
+  */
+  pPipeConfig.PixelPipePitch = 800;
+  pPipeConfig.PixelPackerFormat = DCMIPP_PIXEL_PACKER_FORMAT_RGB565_1;
+  if (HAL_DCMIPP_PIPE_SetConfig(&hdcmipp, DCMIPP_PIPE2, &pPipeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN DCMIPP_Init 2 */
 
   /* USER CODE END DCMIPP_Init 2 */

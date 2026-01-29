@@ -180,7 +180,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_UART8;
-    PeriphClkInitStruct.Uart8ClockSelection = RCC_UART8CLKSOURCE_PCLK1;
+    PeriphClkInitStruct.Uart8ClockSelection = RCC_UART8CLKSOURCE_IC9;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockSelection = RCC_ICCLKSOURCE_PLL2;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockDivider = 10;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -240,7 +242,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART2;
-    PeriphClkInitStruct.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
+    PeriphClkInitStruct.Usart2ClockSelection = RCC_USART2CLKSOURCE_IC9;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockSelection = RCC_ICCLKSOURCE_PLL2;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockDivider = 10;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();
@@ -282,7 +286,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
   /** Initializes the peripherals clock
   */
     PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3;
-    PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
+    PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_IC9;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockSelection = RCC_ICCLKSOURCE_PLL2;
+    PeriphClkInitStruct.ICSelection[RCC_IC9].ClockDivider = 10;
     if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
     {
       Error_Handler();

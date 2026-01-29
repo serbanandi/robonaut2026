@@ -34,7 +34,7 @@
 /* Entry Point */
 ENTRY(Reset_Handler)
 _Min_Heap_Size = 0x800; /* required amount of heap */
-_Min_Stack_Size = 0x800; /* required amount of stack */
+_Min_Stack_Size = 0x4000; /* required amount of stack */
 
 /* Highest address of the user mode stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
@@ -44,7 +44,7 @@ _sstack = _estack - _Min_Stack_Size;
 MEMORY
 {
   ROM    (xrw)    : ORIGIN = 0x70100400,   LENGTH = 2048K
-  RAM    (xrw)    : ORIGIN = 0x34000000,   LENGTH = 2048K
+  RAM    (xrw)    : ORIGIN = 0x34064000,   LENGTH = 1648K
 }
 
 /* Sections */
