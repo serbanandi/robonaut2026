@@ -1,23 +1,24 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2025 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "adc.h"
 #include "cacheaxi.h"
 #include "dcmipp.h"
 #include "gpdma.h"
@@ -31,8 +32,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "System/sys_interface.h"
 #include "SimpleLogger/SimpleLogger.h"
+#include "System/sys_interface.h"
 
 /* USER CODE END Includes */
 
@@ -43,7 +44,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LED_PERIOD_MS	(500)
+#define LED_PERIOD_MS (500)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -78,7 +79,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  MPU_Config();
+    MPU_Config();
   /* USER CODE END 1 */
 
   /* Enable the CPU Cache */
@@ -123,6 +124,8 @@ int main(void)
   MX_TIM17_Init();
   MX_TIM14_Init();
   MX_TIM7_Init();
+  MX_ADC1_Init();
+  MX_ADC2_Init();
   SystemIsolation_Config();
   /* USER CODE BEGIN 2 */
 
@@ -149,20 +152,20 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  
-  BspCOMInit.BaudRate = 921600;
-  if (BSP_COM_Init(COM1, &BspCOMInit) != BSP_ERROR_NONE)
-	  Error_Handler();
 
-  sys_Init();
-  sys_Run();
+    BspCOMInit.BaudRate = 921600;
+    if (BSP_COM_Init(COM1, &BspCOMInit) != BSP_ERROR_NONE)
+        Error_Handler();
 
-  while (1)
-  {
+    sys_Init();
+    sys_Run();
+
+    while (1)
+    {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-  }
+    }
   /* USER CODE END 3 */
 }
 
@@ -212,6 +215,16 @@ void PeriphCommonClock_Config(void)
   {
     Error_Handler();
   }
+  /* set GPDMA1 channel 2 used by ADC1 */
+  if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel2,DMA_CHANNEL_SEC|DMA_CHANNEL_PRIV|DMA_CHANNEL_SRC_SEC|DMA_CHANNEL_DEST_SEC)!= HAL_OK )
+  {
+    Error_Handler();
+  }
+  /* set GPDMA1 channel 3 used by ADC2 */
+  if (HAL_DMA_ConfigChannelAttributes(&handle_GPDMA1_Channel3,DMA_CHANNEL_SEC|DMA_CHANNEL_PRIV|DMA_CHANNEL_SRC_SEC|DMA_CHANNEL_DEST_SEC)!= HAL_OK )
+  {
+    Error_Handler();
+  }
 
 /* USER CODE BEGIN RIF_Init 1 */
 
@@ -227,37 +240,37 @@ void PeriphCommonClock_Config(void)
 /* USER CODE BEGIN 4 */
 void MPU_Config(void)
 {
-  MPU_Region_InitTypeDef default_config = {0};
-  MPU_Attributes_InitTypeDef attr_config = {0};
-  uint32_t primask_bit = __get_PRIMASK();
-  __disable_irq();
+    MPU_Region_InitTypeDef default_config = { 0 };
+    MPU_Attributes_InitTypeDef attr_config = { 0 };
+    uint32_t primask_bit = __get_PRIMASK();
+    __disable_irq();
 
-  /* disable the MPU */
-  HAL_MPU_Disable();
+    /* disable the MPU */
+    HAL_MPU_Disable();
 
-  /* create an attribute configuration for the MPU */
-  attr_config.Attributes = INNER_OUTER(MPU_NOT_CACHEABLE);
-  attr_config.Number = MPU_ATTRIBUTES_NUMBER0;
+    /* create an attribute configuration for the MPU */
+    attr_config.Attributes = INNER_OUTER(MPU_NOT_CACHEABLE);
+    attr_config.Number = MPU_ATTRIBUTES_NUMBER0;
 
-  HAL_MPU_ConfigMemoryAttributes(&attr_config);
+    HAL_MPU_ConfigMemoryAttributes(&attr_config);
 
-  /* Create a non cacheable region */
-  /*Normal memory type, code execution allowed */
-  default_config.Enable = MPU_REGION_ENABLE;
-  default_config.Number = MPU_REGION_NUMBER0;
-  default_config.BaseAddress = __NON_CACHEABLE_SECTION_BEGIN;
-  default_config.LimitAddress = __NON_CACHEABLE_SECTION_END;
-  default_config.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
-  default_config.AccessPermission = MPU_REGION_ALL_RW;
-  default_config.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
-  default_config.AttributesIndex = MPU_ATTRIBUTES_NUMBER0;
-  HAL_MPU_ConfigRegion(&default_config);
+    /* Create a non cacheable region */
+    /*Normal memory type, code execution allowed */
+    default_config.Enable = MPU_REGION_ENABLE;
+    default_config.Number = MPU_REGION_NUMBER0;
+    default_config.BaseAddress = __NON_CACHEABLE_SECTION_BEGIN;
+    default_config.LimitAddress = __NON_CACHEABLE_SECTION_END;
+    default_config.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+    default_config.AccessPermission = MPU_REGION_ALL_RW;
+    default_config.IsShareable = MPU_ACCESS_NOT_SHAREABLE;
+    default_config.AttributesIndex = MPU_ATTRIBUTES_NUMBER0;
+    HAL_MPU_ConfigRegion(&default_config);
 
-  /* enable the MPU */
-  HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+    /* enable the MPU */
+    HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
 
-  /* Exit critical section to lock the system and avoid any issue around MPU mechanisme */
-  __set_PRIMASK(primask_bit);
+    /* Exit critical section to lock the system and avoid any issue around MPU mechanisme */
+    __set_PRIMASK(primask_bit);
 }
 
 /* USER CODE END 4 */
@@ -269,9 +282,10 @@ void MPU_Config(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
-  while (1);
+    /* User can add his own implementation to report the HAL error return state */
+    __disable_irq();
+    while (1)
+        ;
   /* USER CODE END Error_Handler_Debug */
 }
 #ifdef USE_FULL_ASSERT
@@ -285,7 +299,7 @@ void Error_Handler(void)
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
-  Log("HAL-ASSERT", "Wrong parameters value: file %s on line %d\r\n", file, line);
+    // Log("HAL-ASSERT", "Wrong parameters value: file %s on line %d\r\n", file, line);
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

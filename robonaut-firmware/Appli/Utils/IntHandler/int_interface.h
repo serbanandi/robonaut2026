@@ -18,6 +18,8 @@ typedef enum
 
     INT_TIM_PERIOD_ELAPSED,
 
+    INT_ADC_CONV_CPLT,
+
     INT_EVENT_TYPE_COUNT
 } int_IntEventType;
 

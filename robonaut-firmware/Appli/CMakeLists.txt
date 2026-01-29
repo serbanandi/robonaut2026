@@ -41,6 +41,9 @@ add_executable(${CMAKE_PROJECT_NAME})
 # Include mx-generated
 include("mx-generated.cmake")
 
+# Enable float support in printf and scanf functions
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float -u _scanf_float")
+
 
 # In order to use CMake for cross-compiling
 set(CMAKE_CXX_COMPILER_FORCED "true")
@@ -73,6 +76,7 @@ set(UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Utils/IntHandler/impl/int_intHandler.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Utils/IntHandler/impl/int_listManager.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Utils/Telemetry/impl/tel.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Utils/MicroTimer/impl/mt.c
 )
 
 set(HW_DRIVER_SOURCES
@@ -80,16 +84,16 @@ set(HW_DRIVER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/Drive/impl/drv_encoder.c
     ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/Drive/impl/drv_motor.c
     #${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/Imu/impl/imu.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/LineSensor/LineSensor.c
     ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/Servo/impl/servo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/SSD1306/impl/ssd1306.c
     ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/SSD1306/impl/ssd1306_fonts.c
     ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/Uart/impl/uart.c
     ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/UserInput/impl/ui.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/AnalogInputs/impl/anlg.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/HwDrivers/LineSensor/impl/ls.c
 )
 
 set(ROBONAUT_UTIL_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/RobonAUT/MicroTimer/MicroTimer.c
     ${CMAKE_CURRENT_SOURCE_DIR}/RobonAUT/SimpleLogger/SimpleLogger.c
 )
 

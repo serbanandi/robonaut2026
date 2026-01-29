@@ -41,3 +41,5 @@ mx.scratch
 
 /mx-generated.cmake
 starm-clang.cmake
+
+*.ld

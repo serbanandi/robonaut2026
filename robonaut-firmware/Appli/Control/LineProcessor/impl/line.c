@@ -1,9 +1,10 @@
 #include "line.h"
+#include <math.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include "Drive/drv_interface.h"
-#include "LineSensor/LineSensor.h"
+#include "LineSensor/ls_interface.h"
 #include "Telemetry/tel_interface.h"
 
 static line_InternalStateType currentState;
@@ -106,13 +107,12 @@ static bool _line_isFullBlack(uint16_t adcValues[32])
 
 static void _line_ShowFbLeds(uint16_t adcValues[32])
 {
-    LS_LED_Values_Type led_values;
+    ls_LedValuesType led_values;
     for (int i = 0; i < 32; i++)
     {
-        led_values.front_led[i] = !(adcValues[i] < adcThreshold);
-        led_values.rear_led[i] = !(adcValues[i] < adcThreshold);
+        led_values.v[i] = !(adcValues[i] < adcThreshold);
     }
-    LS_SetFbLEDs(&led_values);
+    ls_SetFbLEDs(&led_values, LS_SENSOR_FRONT);
 }
 
 static float _line_DetectMainLine(uint16_t adcValues[32],
@@ -210,18 +210,17 @@ void line_ResetInternalState()
 
 line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
 {
-    LS_Process();
-    LS_ADC_Values_Type adcValues;
-    LS_GetADCValues(&adcValues);
+    ls_AdcValuesType adcValues;
+    ls_GetADCValues(&adcValues, LS_SENSOR_FRONT);
 
-    _line_ShowFbLeds(adcValues.front_adc);
+    _line_ShowFbLeds(adcValues.v);
     static char logBuffer[500];
     if (logLineAdcValues)
     {
         int len = 0;
         for (int i = 0; i < 32; i++)
         {
-            len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%04u ", adcValues.front_adc[i]);
+            len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%04u ", adcValues.v[i]);
         }
         tel_Log(TEL_LOG_INFO, "%s", logBuffer);
     }
@@ -230,13 +229,13 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
         int len = 0;
         for (int i = 0; i < 32; i++)
         {
-            len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%d ", adcValues.front_adc[i] > adcThreshold);
+            len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%d ", adcValues.v[i] > adcThreshold);
         }
         tel_Log(TEL_LOG_INFO, "%s", logBuffer);
     }
 
     line_DetectionChunkType lineChunks[4];
-    int detectedLineChunkNum = _line_DetectLineChunks(lineChunks, adcValues.front_adc);
+    int detectedLineChunkNum = _line_DetectLineChunks(lineChunks, adcValues.v);
     lastDetectedChunkNum = detectedLineChunkNum;
 
     uint32_t currentEncoderCnt = drv_GetEncoderCount();
@@ -259,7 +258,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
             {
                 currentState = LINE_STATE_SINGLE_LINE;
                 currentStateStartEncoderCnt = currentEncoderCnt;
-                lastDetectedLinePos = _line_RunLineDetectionOnPartialData(0, 32, adcValues.front_adc);
+                lastDetectedLinePos = _line_RunLineDetectionOnPartialData(0, 32, adcValues.v);
             }
             else
             {
@@ -272,7 +271,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
             if (detectedLineChunkNum == 0)
                 break;
 
-            lastDetectedLinePos = _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, false);
+            lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
             if (detectedLineChunkNum == 4)
             {
                 currentState = LINE_STATE_POTENTIAL_QUAD_LINE;
@@ -288,7 +287,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
                 break;
             }
 
-            lastDetectedLinePos = _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, false);
+            lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
             if (detectedLineChunkNum == 4)
             {
                 if (currentEncoderCnt - currentStateStartEncoderCnt > 2 * DRV_ENCODER_COUNTS_PER_CM)
@@ -317,8 +316,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
         {
             if (detectedLineChunkNum != 0)
             {
-                lastDetectedLinePos =
-                    _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, false);
+                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
             }
 
             if (detectedLineChunkNum == 1)
@@ -339,8 +337,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
         {
             if (detectedLineChunkNum != 0)
             {
-                lastDetectedLinePos =
-                    _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, false);
+                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
             }
 
             if (currentEncoderCnt - currentStateStartEncoderCnt > 4 * DRV_ENCODER_COUNTS_PER_CM)
@@ -356,8 +353,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
         {
             if (detectedLineChunkNum != 0)
             {
-                lastDetectedLinePos =
-                    _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, false);
+                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
             }
 
             if (detectedLineChunkNum > 1)
@@ -381,8 +377,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
         {
             if (detectedLineChunkNum != 0)
             {
-                lastDetectedLinePos =
-                    _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, false);
+                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
             }
 
             if (detectedLineChunkNum == lastLineChunkNum)
@@ -437,7 +432,7 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
         {
             if (detectedLineChunkNum != 0)
             {
-                lastDetectedLinePos = _line_DetectMainLine(adcValues.front_adc, lineChunks, detectedLineChunkNum, true);
+                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, true);
             }
 
             if (currentEncoderCnt - currentStateStartEncoderCnt > 60 * DRV_ENCODER_COUNTS_PER_CM)
@@ -452,5 +447,5 @@ line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
 
     return (line_DetectionResultType) { .detectedLinePos = lastDetectedLinePos,
                                         .lineDetected = (currentState != LINE_STATE_NO_LINE),
-                                        .allBlack = _line_isFullBlack(adcValues.front_adc) };
+                                        .allBlack = _line_isFullBlack(adcValues.v) };
 }

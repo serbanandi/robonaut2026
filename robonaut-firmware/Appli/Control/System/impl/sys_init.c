@@ -7,14 +7,15 @@
 // #include "npu_cache.h"
 // #include "NeuralNetwork/NeuralNetwork.h"
 
+#include "AnalogInputs/anlg_interface.h"
 #include "ControllerTuning/tuning_interface.h"
 #include "Drive/drv_interface.h"
 #include "HwTest/test_interface.h"
 #include "IMU/imu_interface.h"
 #include "LineController/lc_interface.h"
 #include "LineProcessor/line_interface.h"
-#include "LineSensor/LineSensor.h"
-#include "MicroTimer/MicroTimer.h"
+#include "LineSensor/ls_interface.h"
+#include "MicroTimer/mt_interface.h"
 #include "SSD1306/ssd1306_fonts.h"
 #include "SSD1306/ssd1306_interface.h"
 #include "Servo/servo_interface.h"
@@ -31,32 +32,20 @@ static drv_ControlParamsType telVar_currentDrvParams = {
 static float telVar_currentMaxPower = 0.4f;
 static uint32_t telVar_maxEncoderCps = 300000; // 300k counts per second for now, TODO: tune properly
 
-// static imu_Imu _sys_imuInstance;
-
 void sys_Init(void)
 {
     // npu_cache_enable();
     // NN_Init();
 
-    if (!MT_Init(&htim6))
-        Error_Handler();
-    if (!LS_Init(&hspi4, NULL))
-        Error_Handler();
-
+    mt_Init();
     tel_Init();
+    ls_Init();
     ssd1306_Init();
     ui_Init();
     servo_Init();
     drv_Init(&telVar_currentDrvParams, telVar_currentMaxPower, telVar_maxEncoderCps);
     line_Init();
-    // imu_init(&_sys_imuInstance, &hspi2, IMU_CS_GPIO_Port, IMU_CS_Pin,
-    // SPI2_IRQn, &htim18); imu_setDefaultSettings(&_sys_imuInstance);
-
-    // CTRL_InitLoop();
-    // tuning_Init(&tuning_params);
-    // test_Init();
-
-    // test_Init();
+    anlg_Init();
 
     _sys_RegisterTelemetryVariables();
 
@@ -66,10 +55,6 @@ void sys_Init(void)
     ssd1306_WriteString("System Init Success", Font_6x8, 0);
     ssd1306_UpdateScreen();
     tel_Log(TEL_LOG_INFO, "System initialized successfully.");
-
-    while (BSP_PB_GetState(BUTTON_USER) != GPIO_PIN_SET)
-    {
-    }
 }
 
 void _sys_RegisterTelemetryVariables(void)
