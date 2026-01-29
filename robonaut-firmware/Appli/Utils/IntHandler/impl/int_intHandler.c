@@ -55,3 +55,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
     void* tmp = (void*) hadc;
     _int_triggerCbs(INT_ADC_CONV_CPLT, tmp);
 }
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef* htim)
+{
+    void* tmp = (void*) htim;
+    _int_triggerCbs(INT_TIM_IC_CAPTURE, tmp);
+}

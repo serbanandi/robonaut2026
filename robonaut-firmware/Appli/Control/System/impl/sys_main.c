@@ -33,6 +33,7 @@ float D_GAIN = 0.0f;
 uint16_t controlPeriodUs = 5000; // 5 ms
 
 static anlg_BatteryStatusType batteryStatus;
+extern bool ui_RC_Trigger_Pulled;
 
 bool next = false;
 uint32_t encoderStart = 0, encoderTarget = 0, encoderDiff = 95000;
@@ -121,6 +122,7 @@ void sys_Run(void)
     static bool targetReached;
     static uint32_t allblack_enc = 0;
 
+    tel_RegisterR(&ui_RC_Trigger_Pulled, TEL_UINT8, "sys_RC_Trigger_Pulled", 100);
     tel_RegisterR(&encoderPos, TEL_UINT32, "sys_encoderPos", 100);
     tel_RegisterR(&encoderSpeed, TEL_FLOAT, "sys_encoderSpeed", 100);
     tel_RegisterR(&totalProcessTimeUs, TEL_UINT16, "sys_totalProcessTimeUs", 100);

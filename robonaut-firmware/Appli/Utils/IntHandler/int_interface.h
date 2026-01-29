@@ -17,6 +17,7 @@ typedef enum
     INT_I2C_MEM_RX_CPLT,
 
     INT_TIM_PERIOD_ELAPSED,
+    INT_TIM_IC_CAPTURE,
 
     INT_ADC_CONV_CPLT,
 
