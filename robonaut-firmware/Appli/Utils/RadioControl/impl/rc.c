@@ -169,7 +169,8 @@ void rc_Process(void)
 
     // States RC_RX_COUNTDOWN_5-2: considered inactive after 1 second without new data
     // State RC_RX_COUNTDOWN_1: considered inactive after 4 seconds without new data
-    // State RC_RX_COUNTDOWN_0, RC_RX_POSITION: considered inactive after 0.2 seconds without new data
+    // State RC_RX_COUNTDOWN_0: considered inactive after 1 second without new data (not in docs, but fuck me I guess)
+    // State RC_RX_POSITION: considered inactive after 0.2 seconds without new data
     switch (rxState)
     {
         case RC_RX_COUNTDOWN_5:
@@ -184,6 +185,9 @@ void rc_Process(void)
                 rxState = RC_RX_INACTIVE;
             break;
         case RC_RX_COUNTDOWN_0:
+            if (HAL_GetTick() - lastRxTime > 1100)
+                rxState = RC_RX_INACTIVE;
+            break;
         case RC_RX_POSITION:
             if (HAL_GetTick() - lastRxTime > 300)
                 rxState = RC_RX_INACTIVE;
