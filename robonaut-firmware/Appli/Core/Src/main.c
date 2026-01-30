@@ -21,6 +21,7 @@
 #include "adc.h"
 #include "cacheaxi.h"
 #include "dcmipp.h"
+#include "dma2d.h"
 #include "gpdma.h"
 #include "hpdma.h"
 #include "i2c.h"
@@ -130,6 +131,7 @@ int main(void)
   MX_ADC2_Init();
   MX_ADC1_Init();
   MX_USB1_OTG_HS_PCD_Init();
+  MX_DMA2D_Init();
   SystemIsolation_Config();
   /* USER CODE BEGIN 2 */
 

@@ -40,7 +40,7 @@ extern "C" {
 /*#define HAL_CRYP_MODULE_ENABLED   */
 /*#define HAL_DCMI_MODULE_ENABLED   */
 #define HAL_DCMIPP_MODULE_ENABLED
-/*#define HAL_DMA2D_MODULE_ENABLED   */
+#define HAL_DMA2D_MODULE_ENABLED
 /*#define HAL_DTS_MODULE_ENABLED   */
 /*#define HAL_ETH_MODULE_ENABLED   */
 /*#define HAL_EXTI_MODULE_ENABLED   */
