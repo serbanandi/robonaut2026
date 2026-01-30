@@ -58,11 +58,7 @@ void LL_ATON_RT_Main(NN_Instance_TypeDef *network_instance)
 
     /*** End of user event handling code ***/
 
-    /* Wait for next event */
-    if (ll_aton_rt_ret == LL_ATON_RT_WFE)
-    { /*** subject to change to fit also user code requirements ***/
-      LL_ATON_OSAL_WFE();
-    }
+    //TODO: ez majd async legyen
   } while (ll_aton_rt_ret != LL_ATON_RT_DONE); /*** subject to change to fit also user code requirements ***/
 
   LL_ATON_RT_DeInit_Network(network_instance); // De-initialize the network instance object

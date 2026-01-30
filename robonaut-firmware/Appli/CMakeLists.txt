@@ -44,13 +44,14 @@ include("mx-generated.cmake")
 # Enable float support in printf and scanf functions
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float -u _scanf_float")
 
-
 # In order to use CMake for cross-compiling
 set(CMAKE_CXX_COMPILER_FORCED "true")
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
+    USE_HAL_DRIVER
+    STM32N657xx
+    USE_NUCLEO_64
 )
 
 # Enable CMake support for ASM and C languages
@@ -112,9 +113,11 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
+add_subdirectory(Middlewares)
+
 # Add linked libraries
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined libraries
+target_link_libraries(${CMAKE_PROJECT_NAME}
+    robonaut-firmware_Middlewares
 )
 
 # Remove wrong libob.a library dependency when using cpp files
