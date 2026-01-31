@@ -70,7 +70,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(OV_FLASH_GPIO_Port, OV_FLASH_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOH, OV_FLASHH2_Pin|OV_RST_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(OV_RST_GPIO_Port, OV_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MOT_EN_GPIO_Port, MOT_EN_Pin, GPIO_PIN_RESET);
@@ -106,17 +106,17 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : OV_FLASH_Pin */
   GPIO_InitStruct.Pin = OV_FLASH_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(OV_FLASH_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : OV_FLASHH2_Pin OV_RST_Pin */
-  GPIO_InitStruct.Pin = OV_FLASHH2_Pin|OV_RST_Pin;
+  /*Configure GPIO pin : OV_RST_Pin */
+  GPIO_InitStruct.Pin = OV_RST_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
+  HAL_GPIO_Init(OV_RST_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : GEN_PIN1_Pin MOT_STATUS_Pin GEN_PIN2_Pin */
   GPIO_InitStruct.Pin = GEN_PIN1_Pin|MOT_STATUS_Pin|GEN_PIN2_Pin;
@@ -159,6 +159,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(_AD_CS1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : OV_PWDN_Pin */
+  GPIO_InitStruct.Pin = OV_PWDN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(OV_PWDN_GPIO_Port, &GPIO_InitStruct);
 
 }
 

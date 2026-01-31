@@ -104,8 +104,6 @@ void Error_Handler(void);
 #define GEN_SCK_GPIO_Port GPIOB
 #define OV_FLASH_Pin GPIO_PIN_15
 #define OV_FLASH_GPIO_Port GPIOB
-#define OV_FLASHH2_Pin GPIO_PIN_2
-#define OV_FLASHH2_GPIO_Port GPIOH
 #define GEN_MOSI_Pin GPIO_PIN_3
 #define GEN_MOSI_GPIO_Port GPIOC
 #define MOT_PWM1_Pin GPIO_PIN_11
@@ -196,6 +194,8 @@ void Error_Handler(void);
 #define ENC_B_GPIO_Port GPIOG
 #define SWO_Pin GPIO_PIN_5
 #define SWO_GPIO_Port GPIOB
+#define OV_PWDN_Pin GPIO_PIN_4
+#define OV_PWDN_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
