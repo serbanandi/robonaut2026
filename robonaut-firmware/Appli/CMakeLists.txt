@@ -42,7 +42,7 @@ add_executable(${CMAKE_PROJECT_NAME})
 include("mx-generated.cmake")
 
 # Enable float support in printf and scanf functions
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float -u _scanf_float")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float -u _scanf_float --specs=nosys.specs")
 
 # In order to use CMake for cross-compiling
 set(CMAKE_CXX_COMPILER_FORCED "true")
