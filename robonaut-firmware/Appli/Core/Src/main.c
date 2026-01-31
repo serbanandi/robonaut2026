@@ -64,9 +64,8 @@ COM_InitTypeDef BspCOMInit;
 
 /* Private function prototypes -----------------------------------------------*/
 static void SystemIsolation_Config(void);
-static void NPUCache_config(void);
 /* USER CODE BEGIN PFP */
-
+static void NPUCache_config(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/

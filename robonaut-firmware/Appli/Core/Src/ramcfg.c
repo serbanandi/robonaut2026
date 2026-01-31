@@ -99,7 +99,10 @@ void MX_RAMCFG_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN RAMCFG_Init 2 */
-
+  HAL_RAMCFG_EnableAXISRAM(&hramcfg_SRAM3);
+  HAL_RAMCFG_EnableAXISRAM(&hramcfg_SRAM4);
+  HAL_RAMCFG_EnableAXISRAM(&hramcfg_SRAM5);
+  HAL_RAMCFG_EnableAXISRAM(&hramcfg_SRAM6);
   /* USER CODE END RAMCFG_Init 2 */
 
 }

@@ -234,7 +234,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
          */
         PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC;
         PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_HCLK;
-        PeriphClkInitStruct.AdcDivider = 1;
+        PeriphClkInitStruct.AdcDivider = 2;
         if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
         {
             Error_Handler();
@@ -341,7 +341,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
          */
         PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC;
         PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_HCLK;
-        PeriphClkInitStruct.AdcDivider = 1;
+        PeriphClkInitStruct.AdcDivider = 2;
         if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
         {
             Error_Handler();
