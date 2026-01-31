@@ -54,7 +54,7 @@ void sys_Init(void)
     // imu_init(&_sys_imuInstance, &hspi2, IMU_CS_GPIO_Port, IMU_CS_Pin,
     // SPI2_IRQn, &htim18); imu_setDefaultSettings(&_sys_imuInstance);
 
-    test_Init();
+    // test_Init();
 
     _sys_RegisterTelemetryVariables();
 

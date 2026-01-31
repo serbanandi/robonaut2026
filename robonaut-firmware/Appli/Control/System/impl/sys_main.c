@@ -34,11 +34,12 @@ float D_GAIN = 0.0f;
 uint16_t controlPeriodUs = 5000; // 5 ms
 rc_PositionType latestPosition;
 rc_RxStateType rc_currentRxState;
+sys_NavigationStateType currentState = SYS_STATE_NAVIGATE;
 
 extern bool ui_RC_Trigger_Pulled;
 
 bool next = false;
-uint32_t encoderStart = 0, encoderTarget = 0, encoderDiff = 95000;
+uint32_t encoderStart = 0, encoderTarget = 0, encoderDiff = 90000;
 
 static line_SplitDirectionType lineSelectionFunc(int)
 {
@@ -92,7 +93,40 @@ static line_SplitDirectionType lineSelectionFunc(int)
     };
     static line_SplitDirectionType* lineSplitDirections[] = { path1, path2, path3, path4, path5 };
 
+    tel_Log(TEL_LOG_INFO, "Choosing line split direction (path %u, index %u): %u", pathIndex, lineSplitIndex,
+            lineSplitDirections[pathIndex][lineSplitIndex]);
+
     return lineSplitDirections[pathIndex][(lineSplitIndex++) % pathlens[pathIndex]];
+}
+
+static void _sys_stateNavigate(line_DetectionResultType lineResult)
+{
+    static uint32_t lastValidTime = 0;
+
+    if (lineResult.lineDetected)
+    {
+        float control_signal =
+            lc_Compute(lineResult.detectedLinePos, P_GAIN, I_GAIN, D_GAIN, controlPeriodUs / 100000.0f);
+        servo_SetAngle(SERVO_FRONT, -control_signal);
+        lastValidTime = mt_GetTick();
+
+        drv_SetSpeed(slowSpeed);
+        drv_Enable(true);
+    }
+    else
+    {
+        if (mt_GetTick() - lastValidTime > 500) // Lost for > 0.5 seconds? We are cooked. KILL MOTORS.
+        {
+            drv_Enable(false);
+        }
+        else // Steer HARD in the direction of the last known position.
+        {
+            float recoverySteer = (lineResult.detectedLinePos < 15.5) ? 100.0f : -100.0f;
+            servo_SetAngle(SERVO_FRONT, recoverySteer);
+
+            drv_SetSpeed(slowSpeed);
+        }
+    }
 }
 
 static void _sys_displayStatus()
@@ -134,7 +168,7 @@ void sys_Run(void)
     tel_RegisterRW(&I_GAIN, TEL_FLOAT, "sys_I", 1000);
     tel_RegisterRW(&D_GAIN, TEL_FLOAT, "sys_D", 1000);
     tel_RegisterRW(&next, TEL_UINT8, "sys_next", 400);
-    tel_RegisterR(&doingYturn, TEL_UINT8, "sys_doingYturn", 400);
+    // tel_RegisterR(&doingYturn, TEL_UINT8, "sys_doingYturn", 400);
     tel_RegisterRW(&pathIndex, TEL_UINT8, "sys_pathIndex", 400);
     tel_RegisterRW(&lineSplitIndex, TEL_UINT8, "sys_lineSplitIndex", 400);
     tel_RegisterRW(&encoderDiff, TEL_UINT32, "sys_encoderDiff", 400);
@@ -143,86 +177,146 @@ void sys_Run(void)
 
     while (1)
     {
+        static int32_t lastProcessTime = 0;
+        int32_t currentTime = mt_GetTick();
+        int32_t diff = (currentTime - lastProcessTime + 0x10000) % 0x10000;
+
         _sys_HandleParamTuning();
         tel_Process();
         rc_Process();
         ui_Process();
         ls_Process();
 
-        test_ProcessAll();
+        // test_ProcessAll();
+        _sys_displayStatus();
 
-        //_sys_displayStatus();
-        // bool newDataAvailable = false;
-        // ls_Process(&newDataAvailable);
+        if (ui_GetRCTriggerState() == true)
+        { // kill motors
+            MAGIC_ENABLED = false;
+            drv_Enable(false);
+            drv_SetSpeed(0.0f);
+            continue;
+        }
+        MAGIC_ENABLED = true;
 
-        // if (BSP_PB_GetState(BUTTON_USER) == GPIO_PIN_SET)
-        // {
-        //     MAGIC_ENABLED = false;
-        // }
+        if ((uint16_t) diff < controlPeriodUs) // run control loop at specified period
+            continue;
+        lastProcessTime = currentTime;
 
-        // static int32_t lastProcessTime = 0;
-        // int32_t currentTime = mt_GetTick();
-        // int32_t diff = (currentTime - lastProcessTime + 0x10000) % 0x10000;
-        // if ((uint16_t) diff < controlPeriodUs)
-        //     continue;
-        // lastProcessTime = currentTime;
+        uint32_t encoderPos = drv_GetEncoderCount();
+        switch (currentState)
+        {
+            case SYS_STATE_NAVIGATE:
+                if (ls_IsNewDataAvailable()) // process line only if new data
+                {
+                    line_DetectionResultType lineResult = line_Process(lineSelectionFunc);
+                    if (lineResult.allBlack)
+                    {
+                        currentState = SYS_STATE_FULL_BLACK_LINE_DETECTED;
+                        allblack_enc = encoderPos;
+                        tel_Log(TEL_LOG_INFO, "Full black line detected");
+                    }
+                    _sys_stateNavigate(lineResult);
+                }
+                break;
+            case SYS_STATE_FULL_BLACK_LINE_DETECTED:
+                if (ls_IsNewDataAvailable()) // process line only if new data
+                {
+                    line_DetectionResultType lineResult = line_Process(lineSelectionFunc);
+                    if (!lineResult.allBlack)
+                    {
+                        _sys_stateNavigate(lineResult);
+                        currentState = SYS_STATE_NAVIGATE;
+                        tel_Log(TEL_LOG_INFO, "Back on line after full black");
+                    }
+                    else if (encoderPos - allblack_enc > 3000)
+                    {
+                        currentState = SYS_STATE_Y_TURN;
+                        tel_Log(TEL_LOG_INFO, "Starting Y-turn maneuver");
 
-        // line_DetectionResultType lineResult = line_Process(lineSelectionFunc);
-        // if (doingYturn)
-        // {
-        //     targetReached = fabs(encoderPos - encoderTarget) < 750;
-        //     if (Ydir == 1 && targetReached)
-        //     { // going back and target reached
-        //         Ydir = -1;
-        //         encoderTarget = encoderStart;
-        //         tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going forward", encoderPos);
-        //     }
-        //     else if (Ydir == -1 && targetReached)
-        //     { // going forward and target reached
-        //         Ydir = 0;
-        //         doingYturn = false;
-        //         tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going back to line", encoderPos);
-        //     }
-        //     servo_SetAngle(SERVO_FRONT, Ydir);
-        //     drv_SetSpeed(-Ydir * slowSpeed);
-        // }
-        // else if (MAGIC_ENABLED && !lineResult.allBlack)
-        // { // motor enabled and on line - follow
-        //     allblack_enc = encoderPos;
-        //     float control_signal = lc_Compute(-lineResult.detectedLinePos,
-        //                                       P_GAIN, // P
-        //                                       I_GAIN, // I
-        //                                       D_GAIN, // D
-        //                                       controlPeriodUs / 100000.0f);
-        //     servo_SetAngle(SERVO_FRONT, control_signal);
-
-        //     drv_SetSpeed(slowSpeed);
-        //     drv_Enable(true);
-        // }
-        // else if (MAGIC_ENABLED && lineResult.allBlack)
-        // { // finished sequence
-        //     if (allblack_enc + 3000 > encoderPos)
-        //         continue;
-        //     drv_Enable(false); // stop
-        //     pathIndex++;
-        //     lineSplitIndex = 0;
-
-        //     encoderStart = encoderPos;
-        //     encoderTarget = encoderPos - encoderDiff;
-
-        //     doingYturn = true;
-        //     Ydir = 1;
-        //     tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going backward", encoderPos);
-        //     drv_Enable(true);
-        // }
-        // else
-        // {
-        //     drv_Enable(false);
-        //     drv_SetSpeed(0.0f);
-        //     servo_SetAngle(SERVO_FRONT, 0.0f);
-        //     lc_Init();
-        //     lineSplitIndex = 0;
-        // }
+                        pathIndex++;
+                        lineSplitIndex = 0;
+                        Ydir = 1;
+                        encoderStart = encoderPos;
+                        encoderTarget = encoderStart - encoderDiff;
+                    }
+                }
+                break;
+            case SYS_STATE_Y_TURN:
+                targetReached = fabs(encoderPos - encoderTarget) < 750;
+                if (Ydir == 1 && targetReached)
+                { // going back and target reached
+                    Ydir = -1;
+                    encoderTarget = encoderStart;
+                    tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going forward", encoderPos);
+                }
+                else if (Ydir == -1 && targetReached)
+                { // going forward and target reached
+                    Ydir = 0;
+                    tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going back to line", encoderPos);
+                    currentState = SYS_STATE_NAVIGATE;
+                    tel_Log(TEL_LOG_INFO, "Y-turn maneuver completed, back to navigation");
+                }
+                servo_SetAngle(SERVO_FRONT, Ydir);
+                drv_SetSpeed(-Ydir * slowSpeed);
+                break;
+        }
         // totalProcessTimeUs = (uint16_t) (((int32_t) mt_GetTick() - processingStartUs + 0x10000) % 0x10000);
     }
 }
+// line_DetectionResultType lineResult = line_Process(lineSelectionFunc);
+// if (doingYturn)
+// {
+//     targetReached = fabs(encoderPos - encoderTarget) < 750;
+//     if (Ydir == 1 && targetReached)
+//     { // going back and target reached
+//         Ydir = -1;
+//         encoderTarget = encoderStart;
+//         tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going forward", encoderPos);
+//     }
+//     else if (Ydir == -1 && targetReached)
+//     { // going forward and target reached
+//         Ydir = 0;
+//         doingYturn = false;
+//         tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going back to line", encoderPos);
+//     }
+//     servo_SetAngle(SERVO_FRONT, Ydir);
+//     drv_SetSpeed(-Ydir * slowSpeed);
+// }
+// else if (MAGIC_ENABLED && !lineResult.allBlack)
+// { // motor enabled and on line - follow
+//     allblack_enc = encoderPos;
+//     float control_signal = lc_Compute(-lineResult.detectedLinePos,
+//                                       P_GAIN, // P
+//                                       I_GAIN, // I
+//                                       D_GAIN, // D
+//                                       controlPeriodUs / 100000.0f);
+//     servo_SetAngle(SERVO_FRONT, control_signal);
+
+//     drv_SetSpeed(slowSpeed);
+//     drv_Enable(true);
+// }
+// else if (MAGIC_ENABLED && lineResult.allBlack)
+// { // finished sequence
+//     if (allblack_enc + 3000 > encoderPos)
+//         continue;
+//     drv_Enable(false); // stop
+//     pathIndex++;
+//     lineSplitIndex = 0;
+
+//     encoderStart = encoderPos;
+//     encoderTarget = encoderPos - encoderDiff;
+
+//     doingYturn = true;
+//     Ydir = 1;
+//     tel_Log(TEL_LOG_DEBUG, "Enc: %u - Going backward", encoderPos);
+//     drv_Enable(true);
+// }
+// else
+// {
+//     drv_Enable(false);
+//     drv_SetSpeed(0.0f);
+//     servo_SetAngle(SERVO_FRONT, 0.0f);
+//     lc_Init();
+//     lineSplitIndex = 0;
+// }

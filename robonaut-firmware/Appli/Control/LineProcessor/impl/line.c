@@ -3,193 +3,264 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "Drive/drv_interface.h"
 #include "LineSensor/ls_interface.h"
 #include "Telemetry/tel_interface.h"
 
 static line_InternalStateType currentState;
-static uint16_t adcThreshold = 800;
+static line_InternalStateType lastValidState;
+static uint16_t adcThreshold = 1000;   // Rising edge threshold
+static uint16_t adcThresholdLow = 800; // Falling edge threshold (Hysteresis)
 
 static bool logLineAdcValues = false;
+static bool logSmoothedAdcValues = false;
 static bool logLineThresholds = false;
+static bool logDetectedChunks = false;
 
-static uint32_t lastLineDetectionEncoderCnt = 0;
-static uint32_t lastTypeDetectionEncoderCnt = 0;
 static uint32_t currentStateStartEncoderCnt = 0;
-static uint32_t initialTypeDetectionEncoderCnt = 0;
-static uint8_t lastLineChunkNum = 0;
-static line_SplitDirectionType selectedSplitInfo = 0;
-static float lastDetectedLinePos = 0.0f;
+static line_SplitDirectionType selectedSplitInfo = LINE_SPLIT_STRAIGHT;
+static float lastDetectedLinePos = 15.5f;
 
 static uint8_t lastDetectedChunkNum = 0;
 
-static float _line_RunLineDetectionOnPartialData(int startingIndex, int length, uint16_t adcValues[32])
+static float smoothedAdc[32]; // Buffer for smoothed values
+
+// --- HELPER: GAUSSIAN SMOOTHING ---
+static void _line_GaussianSmooth(uint16_t* raw, float* smooth)
 {
-    int sum_adc = 0;
-    int wsum_adc = 0;
-    for (int i = startingIndex; i < startingIndex + length; i++)
+    smooth[0] = (float) raw[0];
+    smooth[31] = (float) raw[31];
+    for (int i = 1; i < 31; i++)
     {
-        sum_adc += adcValues[i];
-        wsum_adc += adcValues[i] * ((i - 16));
+        smooth[i] = (raw[i - 1] * 0.25f) + (raw[i] * 0.5f) + (raw[i + 1] * 0.25f);
     }
-
-    if (sum_adc == 0)
-        return 0.0f;
-
-    return ((float) wsum_adc) / ((float) sum_adc);
 }
 
-static int _line_DetectLineChunks(line_DetectionChunkType chunks[4], uint16_t adcValues[32])
+// --- HELPER: CHUNK DETECTION ---
+static uint8_t _line_DetectLineChunks(line_DetectionChunkType chunks[MAX_CHUNKS], float* adcValues)
 {
     int chunkNum = 0;
-    int chunkActivationCnt = 0;
-    bool chunkIsActive = false;
+    bool insideChunk = false;
+    int startIndex = 0;
 
-    for (int p = 0; p < 32; p++)
+    for (int i = 0; i < 32; i++)
     {
-        if (!chunkIsActive)
+        if (!insideChunk)
         {
-            if (adcValues[p] >= adcThreshold)
+            if (adcValues[i] > adcThreshold)
             {
-                chunkActivationCnt++;
-                if (chunkActivationCnt == 2)
-                {
-                    chunks[chunkNum].startPos = p + 1 - chunkActivationCnt;
-                    chunkActivationCnt = 0;
-                    chunkIsActive = true;
-                }
-            }
-            else
-            {
-                chunkActivationCnt = 0;
+                insideChunk = true;
+                startIndex = i;
             }
         }
         else
         {
-            if (adcValues[p] < adcThreshold)
+            if (adcValues[i] < adcThresholdLow)
             {
-                chunkActivationCnt++;
-                if (chunkActivationCnt == 2)
+                insideChunk = false;
+                if ((i - startIndex) >= MIN_CHUNK_WIDTH)
                 {
-                    chunks[chunkNum].endPos = p + 1 - chunkActivationCnt;
-                    chunkActivationCnt = 0;
-                    chunkIsActive = false;
+                    chunks[chunkNum].startPos = startIndex;
+                    chunks[chunkNum].endPos = i - 1;
                     chunkNum++;
-                    if (chunkNum == 4)
+                    if (chunkNum >= MAX_CHUNKS)
                         return chunkNum;
                 }
             }
-            else
-            {
-                chunkActivationCnt = 0;
-            }
         }
     }
-
-    if (chunkIsActive)
+    // Check edge case (end of array)
+    if (insideChunk)
     {
-        chunks[chunkNum].endPos = 31 - chunkActivationCnt;
-        chunkNum++;
+        if ((32 - startIndex) >= MIN_CHUNK_WIDTH)
+        {
+            chunks[chunkNum].startPos = startIndex;
+            chunks[chunkNum].endPos = 31;
+            chunkNum++;
+        }
     }
-
     return chunkNum;
 }
 
-static bool _line_isFullBlack(uint16_t adcValues[32])
+// --- HELPER: CENTROID CALCULATION ---
+static float _line_GetCentroid(int start, int end, float* adcValues)
 {
-    for (int p = 0; p < 32; p++)
+    float sum = 0, wsum = 0;
+    for (int i = start; i <= end; i++)
     {
-        if (adcValues[p] < adcThreshold)
-            return false;
+        sum += adcValues[i];
+        wsum += adcValues[i] * i;
     }
-    return true;
+    return (sum > 1.0f) ? (wsum / sum) : 0.0f;
 }
 
-static void _line_ShowFbLeds(uint16_t adcValues[32])
+// --- HELPER: JUNCTION CHECK ---
+static bool _line_IsJunction(line_DetectionChunkType* chunks, int numChunks)
+{
+    if (numChunks != 4)
+        return false;
+    return true;
+    /*
+        // Geometry Validation:
+        // 1. Outer chunks should be near the edges (Markers)
+        bool leftMarker  = (chunks[0].startPos < 10);
+        bool rightMarker = (chunks[3].endPos > 20);
+
+        // 2. Inner chunks should be somewhat centered (The Track)
+        float innerLeftPos  = (chunks[1].startPos + chunks[1].endPos) / 2.0f;
+        float innerRightPos = (chunks[2].startPos + chunks[2].endPos) / 2.0f;
+
+        // Check if inner lines are roughly in the middle 16 sensors
+        bool innerValid = (innerLeftPos > 12.0f && innerRightPos < 18.0f);
+
+        return (leftMarker && rightMarker && innerValid);
+    */
+}
+
+// --- HELPER: CHECK FOR FULL BLACK LINE (START/FINISH) ---
+static bool _line_isFullBlack(float* adcValues)
+{
+    int blackCount = 0;
+    // Check central 20 sensors (indices 6-25) to avoid edge noise
+    for (int i = 6; i < 26; i++)
+    {
+        if (adcValues[i] > adcThreshold) // Assuming > Threshold means BLACK
+            blackCount++;
+    }
+
+    // If > 90% of the center is black, it's a cross-line
+    return (blackCount > 18);
+}
+
+// --- HELPER: SHOW LEDS ---
+static void _line_ShowFbLeds(float* adcValues)
 {
     ls_LedValuesType led_values;
     for (int i = 0; i < 32; i++)
     {
-        led_values.v[i] = !(adcValues[i] < adcThreshold);
+        led_values.v[i] = !(adcValues[i] < (float) adcThreshold);
     }
     ls_SetFbLEDs(&led_values, LS_SENSOR_FRONT);
 }
 
-static float _line_DetectMainLine(uint16_t adcValues[32],
-                                  line_DetectionChunkType lineChunks[4],
-                                  int lineChunkNum,
-                                  bool useSelectedSplitLineIdx)
+// --- HELPER: LOGGING ---
+static void _line_LogAdcValues(float* adcValues)
 {
-    int selectedChunk = 0;
-    if (lineChunkNum == 0)
-        return 0.0f;
-    if (lineChunkNum == 1)
+    if (logLineAdcValues)
     {
-        selectedChunk = 0;
-    }
-
-    float midPos[4];
-    for (int i = 0; i < lineChunkNum; i++)
-    {
-        midPos[i] = (lineChunks[i].startPos + lineChunks[i].endPos - 31) * 0.5f;
-    }
-    int closestChunk = 0;
-    float closestDist = fabs(midPos[0] - lastDetectedLinePos);
-    for (int i = 1; i < lineChunkNum; i++)
-    {
-        float dist = fabs(midPos[i] - lastDetectedLinePos);
-        if (dist < closestDist)
+        char buffer[256];
+        int offset = 0;
+        offset += sprintf(&buffer[offset], "Line ADCs: ");
+        for (int i = 0; i < 32; i++)
         {
-            closestDist = dist;
-            closestChunk = i;
+            offset += sprintf(&buffer[offset], "%d ", (int) adcValues[i]);
         }
+        sprintf(&buffer[offset], "\n");
+        tel_Log(TEL_LOG_DEBUG, buffer);
+    }
+    if (logSmoothedAdcValues)
+    {
+        char buffer[256];
+        int offset = 0;
+        offset += sprintf(&buffer[offset], "Smoothed ADCs: ");
+        for (int i = 0; i < 32; i++)
+        {
+            offset += sprintf(&buffer[offset], "%d ", (int) smoothedAdc[i]);
+        }
+        sprintf(&buffer[offset], "\n");
+        tel_Log(TEL_LOG_DEBUG, buffer);
+    }
+    if (logLineThresholds)
+    {
+        char buffer[256];
+        int offset = 0;
+        offset += sprintf(&buffer[offset], "Line Thresholds: ");
+        for (int i = 0; i < 32; i++)
+        {
+            offset += sprintf(&buffer[offset], "%d ", adcValues[i] > adcThreshold ? 1 : 0);
+        }
+        sprintf(&buffer[offset], "\n");
+        tel_Log(TEL_LOG_DEBUG, buffer);
+    }
+    if (logDetectedChunks)
+    {
+        line_DetectionChunkType chunks[MAX_CHUNKS];
+        uint8_t chunkCount = _line_DetectLineChunks(chunks, adcValues);
+        char buffer[256];
+        int offset = 0;
+        offset += sprintf(&buffer[offset], "Detected Chunks (%d): ", chunkCount);
+        for (int i = 0; i < chunkCount; i++)
+        {
+            offset += sprintf(&buffer[offset], "[%d-%d] ", chunks[i].startPos, chunks[i].endPos);
+        }
+        sprintf(&buffer[offset], "\n");
+        tel_Log(TEL_LOG_DEBUG, buffer);
+    }
+}
+
+// --- CORE: SELECT LINE POSITION ---
+static float _line_SelectBestLine(float* adcValues, line_DetectionChunkType* chunks, int numChunks, bool forceTurn)
+{
+    if (numChunks == 0)
+        return lastDetectedLinePos;
+
+    // --- CASE 1: JUNCTION DETECTED (4 Lines) ---
+    // If we see the junction, we MUST track the center of the inner two lines.
+    // Ignoring the outer markers prevents the robot from jerking left/right.
+    if (_line_IsJunction(chunks, numChunks))
+    {
+        float center1 = _line_GetCentroid(chunks[1].startPos, chunks[1].endPos, adcValues);
+        float center2 = _line_GetCentroid(chunks[2].startPos, chunks[2].endPos, adcValues);
+        return (center1 + center2) / 2.0f;
     }
 
-    if (useSelectedSplitLineIdx)
+    // --- CASE 2: NORMAL TRACKING / FORK ---
+    float centers[MAX_CHUNKS];
+    for (int i = 0; i < numChunks; i++)
+    {
+        centers[i] = _line_GetCentroid(chunks[i].startPos, chunks[i].endPos, adcValues);
+    }
+
+    int bestIdx = -1;
+    float minDist = 1000.0f;
+
+    // Logic: Look for line closest to where we expect it to be
+    float searchPos = lastDetectedLinePos;
+
+    // Bias search window during turns
+    if (forceTurn)
     {
         if (selectedSplitInfo == LINE_SPLIT_RIGHT)
-        {
-            selectedChunk = 0;
-        }
-        else if (selectedSplitInfo == LINE_SPLIT_STRAIGHT)
-        {
-            if (lineChunkNum == 3)
-            {
-                selectedChunk = 1;
-            }
-            else
-            {
-                selectedChunk = closestChunk;
-            }
-        }
-        else if (selectedSplitInfo == LINE_SPLIT_LEFT)
-        {
-            selectedChunk = lineChunkNum - 1;
-        }
+            searchPos -= 8.0f;
+        if (selectedSplitInfo == LINE_SPLIT_LEFT)
+            searchPos += 8.0f;
     }
-    else
+
+    for (int i = 0; i < numChunks; i++)
     {
-        for (int i = 0; i < lineChunkNum; i++)
+        float dist = fabs(centers[i] - searchPos);
+        if (dist < TRACKING_WINDOW && dist < minDist)
         {
-            if (lineChunks[i].endPos - lineChunks[i].startPos > 3)
-            {
-                return lastDetectedLinePos;
-            }
-        }
-        if (lineChunkNum == 4)
-        {
-            int start = fmax(lineChunks[1].startPos - 1, 0);
-            int length = fmin(lineChunks[2].endPos + 1, 31) - start + 1;
-            return _line_RunLineDetectionOnPartialData(start, length, adcValues);
-        }
-        else
-        {
-            selectedChunk = closestChunk;
+            minDist = dist;
+            bestIdx = i;
         }
     }
-    int start = fmax(lineChunks[selectedChunk].startPos - 1, 0);
-    int length = fmin(lineChunks[selectedChunk].endPos + 1, 31) - start + 1;
-    return _line_RunLineDetectionOnPartialData(start, length, adcValues);
+
+    // Recovery if window is empty
+    if (bestIdx == -1)
+    {
+        for (int i = 0; i < numChunks; i++)
+        {
+            float dist = fabs(centers[i] - searchPos);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                bestIdx = i;
+            }
+        }
+    }
+    return centers[bestIdx];
 }
 
 void line_Init()
@@ -197,6 +268,8 @@ void line_Init()
     line_ResetInternalState();
     tel_RegisterRW(&adcThreshold, TEL_UINT16, "line_adcThreshold", 1000);
     tel_RegisterRW(&logLineAdcValues, TEL_UINT8, "line_logAdcValues", 1000);
+    tel_RegisterRW(&logSmoothedAdcValues, TEL_UINT8, "line_logSmoothedAdcValues", 1000);
+    tel_RegisterRW(&logDetectedChunks, TEL_UINT8, "line_logDetectedChunks", 1000);
     tel_RegisterRW(&logLineThresholds, TEL_UINT8, "line_logThresholds", 1000);
     tel_RegisterR(&currentState, TEL_UINT8, "line_currentState", 100);
     tel_RegisterR(&lastDetectedChunkNum, TEL_UINT8, "line_lastDetectedChunkNum", 100);
@@ -204,248 +277,92 @@ void line_Init()
 
 void line_ResetInternalState()
 {
-    currentState = LINE_STATE_NO_LINE;
-    lastLineDetectionEncoderCnt = 0;
+    currentState = LINE_STATE_FOLLOW_LINE;
+    lastValidState = LINE_STATE_FOLLOW_LINE;
+    currentStateStartEncoderCnt = 0;
 }
 
+// --- MAIN PROCESS ---
 line_DetectionResultType line_Process(line_ChooseLineFunc chooseLineFunc)
 {
-    ls_AdcValuesType adcValues;
-    ls_GetADCValues(&adcValues, LS_SENSOR_FRONT);
+    ls_AdcValuesType adcRaw;
+    line_DetectionChunkType chunks[MAX_CHUNKS];
+    uint8_t chunkCount;
+    bool forceTurn = false;
 
-    _line_ShowFbLeds(adcValues.v);
-    static char logBuffer[500];
-    if (logLineAdcValues)
+    ls_GetADCValues(&adcRaw, LS_SENSOR_FRONT);
+    ls_ClearNewDataFlag();
+
+    _line_ShowFbLeds(smoothedAdc);
+
+    _line_GaussianSmooth(adcRaw.v, smoothedAdc);
+
+    _line_LogAdcValues(smoothedAdc);
+
+    if (_line_isFullBlack(smoothedAdc))
     {
-        int len = 0;
-        for (int i = 0; i < 32; i++)
-        {
-            len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%04u ", adcValues.v[i]);
-        }
-        tel_Log(TEL_LOG_INFO, "%s", logBuffer);
-    }
-    if (logLineThresholds)
-    {
-        int len = 0;
-        for (int i = 0; i < 32; i++)
-        {
-            len += snprintf(logBuffer + len, sizeof(logBuffer) - len, "%d ", adcValues.v[i] > adcThreshold);
-        }
-        tel_Log(TEL_LOG_INFO, "%s", logBuffer);
+        return (line_DetectionResultType) { .detectedLinePos = lastDetectedLinePos,
+                                            .lineDetected = true,
+                                            .allBlack = true };
     }
 
-    line_DetectionChunkType lineChunks[4];
-    int detectedLineChunkNum = _line_DetectLineChunks(lineChunks, adcValues.v);
-    lastDetectedChunkNum = detectedLineChunkNum;
-
-    uint32_t currentEncoderCnt = drv_GetEncoderCount();
-
-    if (detectedLineChunkNum > 0)
-        lastLineDetectionEncoderCnt = currentEncoderCnt;
-    if (detectedLineChunkNum == 0 && currentEncoderCnt - lastLineDetectionEncoderCnt > 2 * DRV_ENCODER_COUNTS_PER_CM)
+    chunkCount = _line_DetectLineChunks(chunks, smoothedAdc);
+    if (chunkCount == 0)
+    {
         currentState = LINE_STATE_NO_LINE;
-
-    //    if (detectedLineChunkNum == 0 && currentState != LINE_STATE_NO_LINE)
-    //    {
-    //        tel_Log(TEL_LOG_WARN, "No line detected, detected chunks: 0, current state: %d", currentState);
-    //    }
+        tel_Log(TEL_LOG_INFO, "Line lost.");
+    }
 
     switch (currentState)
     {
+        case LINE_STATE_JUNCTION_DETECTED:
+            // Prepare for split maneuver
+            if (_line_IsJunction(chunks, chunkCount) == false)
+            {
+                currentState = LINE_STATE_SPLIT_MANEUVER;
+                lastValidState = currentState;
+                currentStateStartEncoderCnt = drv_GetEncoderCount();
+                tel_Log(TEL_LOG_INFO, "Preparing for split maneuver.");
+            }
+            break;
+        case LINE_STATE_SPLIT_MANEUVER:
+            // During split maneuver, bias line selection
+            forceTurn = true;
+            // Exit maneuver once 20k encoder ticks have passed and we have 1 clean line again
+            if ((drv_GetEncoderCount() - currentStateStartEncoderCnt) > 20000 && chunkCount == 1)
+            {
+                currentState = LINE_STATE_FOLLOW_LINE;
+                lastValidState = currentState;
+                tel_Log(TEL_LOG_INFO, "Split maneuver completed.");
+                forceTurn = false;
+            }
+            break;
+        case LINE_STATE_FOLLOW_LINE:
+            if (_line_IsJunction(chunks, chunkCount))
+            {
+                currentState = LINE_STATE_JUNCTION_DETECTED;
+                lastValidState = currentState;
+                tel_Log(TEL_LOG_INFO, "Junction detected.");
+
+                // Ask strategy for the NEXT move
+                selectedSplitInfo = chooseLineFunc(chunkCount);
+            }
+            break;
         case LINE_STATE_NO_LINE:
-        {
-            if (detectedLineChunkNum > 0)
+            if (chunkCount > 0)
             {
-                currentState = LINE_STATE_SINGLE_LINE;
-                currentStateStartEncoderCnt = currentEncoderCnt;
-                lastDetectedLinePos = _line_RunLineDetectionOnPartialData(0, 32, adcValues.v);
+                currentState = lastValidState;
+                tel_Log(TEL_LOG_INFO, "Line re-acquired. State restored to %d.", currentState);
             }
-            else
-            {
-                lastDetectedLinePos = 0.0f;
-            }
-            break;
-        }
-        case LINE_STATE_SINGLE_LINE:
-        {
-            if (detectedLineChunkNum == 0)
-                break;
+        default: break;
+    }
 
-            lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
-            if (detectedLineChunkNum == 4)
-            {
-                currentState = LINE_STATE_POTENTIAL_QUAD_LINE;
-                currentStateStartEncoderCnt = currentEncoderCnt;
-            }
-            break;
-        }
-        case LINE_STATE_POTENTIAL_QUAD_LINE:
-        {
-            if (detectedLineChunkNum == 0)
-            {
-                currentState = LINE_STATE_SINGLE_LINE;
-                break;
-            }
-
-            lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
-            if (detectedLineChunkNum == 4)
-            {
-                if (currentEncoderCnt - currentStateStartEncoderCnt > 2 * DRV_ENCODER_COUNTS_PER_CM)
-                {
-                    currentState = LINE_STATE_QUAD_LINE;
-                    lastTypeDetectionEncoderCnt = currentEncoderCnt;
-                    tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                    tel_Log(TEL_LOG_INFO, "Quad line detected");
-                    selectedSplitInfo = chooseLineFunc(detectedLineChunkNum);
-                    switch (selectedSplitInfo)
-                    {
-                        case LINE_SPLIT_LEFT: tel_Log(TEL_LOG_INFO, "Choosing LEFT line"); break;
-                        case LINE_SPLIT_STRAIGHT: tel_Log(TEL_LOG_INFO, "Choosing STRAIGHT line"); break;
-                        case LINE_SPLIT_RIGHT: tel_Log(TEL_LOG_INFO, "Choosing RIGHT line"); break;
-                        default: tel_Log(TEL_LOG_WARN, "Invalid line selection index %d", selectedSplitInfo); break;
-                    }
-                }
-            }
-            else
-            {
-                currentState = LINE_STATE_SINGLE_LINE;
-            }
-            break;
-        }
-        case LINE_STATE_QUAD_LINE:
-        {
-            if (detectedLineChunkNum != 0)
-            {
-                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
-            }
-
-            if (detectedLineChunkNum == 1)
-            {
-                currentState = LINE_STATE_SINGLE_LINE_AFTER_QUAD;
-                currentStateStartEncoderCnt = currentEncoderCnt;
-                tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                tel_Log(TEL_LOG_INFO, "Quad line reduced to single line, switching to SINGLE_LINE_AFTER_QUAD state");
-
-                // currentState = LINE_STATE_WAIT_FOR_LINE_SPLIT_START;
-                // tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                // tel_Log(TEL_LOG_INFO, "Switching to WAIT_FOR_LINE_SPLIT_START state");
-                // currentStateStartEncoderCnt = currentEncoderCnt;
-            }
-            break;
-        }
-        case LINE_STATE_SINGLE_LINE_AFTER_QUAD:
-        {
-            if (detectedLineChunkNum != 0)
-            {
-                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
-            }
-
-            if (currentEncoderCnt - currentStateStartEncoderCnt > 4 * DRV_ENCODER_COUNTS_PER_CM)
-            {
-                currentState = LINE_STATE_WAIT_FOR_LINE_SPLIT_START;
-                tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                tel_Log(TEL_LOG_INFO, "Switching to WAIT_FOR_LINE_SPLIT_START state");
-                currentStateStartEncoderCnt = currentEncoderCnt;
-            }
-            break;
-        }
-        case LINE_STATE_WAIT_FOR_LINE_SPLIT_START:
-        {
-            if (detectedLineChunkNum != 0)
-            {
-                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
-            }
-
-            if (detectedLineChunkNum > 1)
-            {
-                lastLineChunkNum = detectedLineChunkNum;
-                initialTypeDetectionEncoderCnt = currentEncoderCnt;
-                currentStateStartEncoderCnt = currentEncoderCnt;
-                currentState = LINE_STATE_WAIT_FOR_LINE_SPLIT_STABILIZATION;
-                tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                tel_Log(TEL_LOG_INFO, "Multiple lines detected, switching to WAIT_FOR_LINE_SPLIT_STABILIZATION state");
-            }
-            else if (currentEncoderCnt - currentStateStartEncoderCnt > 20 * DRV_ENCODER_COUNTS_PER_CM)
-            {
-                currentState = LINE_STATE_SINGLE_LINE;
-                tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                tel_Log(TEL_LOG_INFO, "Returning to SINGLE_LINE state as no multi line was detected in time");
-            }
-            break;
-        }
-        case LINE_STATE_WAIT_FOR_LINE_SPLIT_STABILIZATION:
-        {
-            if (detectedLineChunkNum != 0)
-            {
-                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, false);
-            }
-
-            if (detectedLineChunkNum == lastLineChunkNum)
-            {
-                if (currentEncoderCnt - initialTypeDetectionEncoderCnt > 3 * DRV_ENCODER_COUNTS_PER_CM)
-                {
-                    tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                    // if (selectedSplitInfo >= detectedLineChunkNum)
-                    //{
-                    //     tel_Log(TEL_LOG_WARN, "______Line stabilized with %d lines detected", detectedLineChunkNum);
-                    // }
-                    currentState = LINE_STATE_HANDLE_LINE_SPLIT;
-                    currentStateStartEncoderCnt = currentEncoderCnt;
-                    tel_Log(TEL_LOG_INFO,
-                            "Line split stabilized with %d lines detected, switching to HANDLE_LINE_SPLIT state",
-                            detectedLineChunkNum);
-                    // if (detectedLineChunkNum == 4 || detectedLineChunkNum == 0)
-                    // {
-                    //     tel_Log(TEL_LOG_WARN, "Line split expected, but %d lines detected, reverting to SINGLE_LINE
-                    //     state", detectedLineChunkNum); currentState = LINE_STATE_SINGLE_LINE; break;
-                    // }
-                    // if (selectedSplitLineIndex >= detectedLineChunkNum)
-                    // {
-                    //     tel_Log(TEL_LOG_WARN, "Invalid line selection index %d, defaulting to %d",
-                    //     selectedSplitLineIndex, detectedLineChunkNum - 1); selectedSplitLineIndex =
-                    //     detectedLineChunkNum - 1;
-                    // }
-                    // lastDetectedLinePos = _line_RunLineDetectionOnPartialData(
-                    //     fmax(lineChunks[selectedSplitLineIndex].startPos - 1, 0),
-                    //     fmin(lineChunks[selectedSplitLineIndex].endPos + 1, 31) -
-                    //     lineChunks[selectedSplitLineIndex].startPos, adcValues.front_adc);
-                    // currentState = LINE_STATE_HANDLE_LINE_SPLIT;
-                    // currentStateStartEncoderCnt = currentEncoderCnt;
-                    // tel_Log(TEL_LOG_INFO, "Switching to HANDLE_LINE_SPLIT state, selected line chunk: %d",
-                    // selectedSplitLineIndex);
-                }
-            }
-            else
-            {
-                lastLineChunkNum = detectedLineChunkNum;
-                initialTypeDetectionEncoderCnt = currentEncoderCnt;
-                if (currentEncoderCnt - currentStateStartEncoderCnt > 10 * DRV_ENCODER_COUNTS_PER_CM)
-                {
-                    currentState = LINE_STATE_SINGLE_LINE;
-                    tel_Log(TEL_LOG_DEBUG, "%u", currentEncoderCnt);
-                    tel_Log(TEL_LOG_WARN, "Returning to SINGLE_LINE state due to prolonged mismatch");
-                }
-            }
-            break;
-        }
-        case LINE_STATE_HANDLE_LINE_SPLIT:
-        {
-            if (detectedLineChunkNum != 0)
-            {
-                lastDetectedLinePos = _line_DetectMainLine(adcValues.v, lineChunks, detectedLineChunkNum, true);
-            }
-
-            if (currentEncoderCnt - currentStateStartEncoderCnt > 60 * DRV_ENCODER_COUNTS_PER_CM)
-            {
-                currentState = LINE_STATE_SINGLE_LINE;
-                tel_Log(TEL_LOG_DEBUG, "%u %d", currentEncoderCnt, detectedLineChunkNum);
-                tel_Log(TEL_LOG_INFO, "Exiting HANDLE_LINE_SPLIT state after some distance traveled");
-            }
-            break;
-        }
+    if (chunkCount > 0)
+    {
+        lastDetectedLinePos = _line_SelectBestLine(smoothedAdc, chunks, chunkCount, forceTurn);
     }
 
     return (line_DetectionResultType) { .detectedLinePos = lastDetectedLinePos,
-                                        .lineDetected = (currentState != LINE_STATE_NO_LINE),
-                                        .allBlack = _line_isFullBlack(adcValues.v) };
+                                        .lineDetected = (chunkCount > 0),
+                                        .allBlack = false };
 }

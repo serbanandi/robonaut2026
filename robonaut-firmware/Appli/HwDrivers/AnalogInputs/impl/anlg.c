@@ -35,7 +35,7 @@ void anlg_ReadDistances(anlg_DistancesType* distances)
     float dist3 = (10.5f / (v3 - 0.15f)) - 0.42f;
     float dist4 = (10.5f / (v4 - 0.15f)) - 0.42f;
     distances->channel[2] = (uint32_t) (dist3 > 40.0) ? 40 : ((dist3 < 4.0) ? 4 : dist3);
-    distances->channel[3] = (uint32_t) (dist4 > 40.0) ? 40 : ((dist4 < 4.0) ? 4 : dist4);ű
+    distances->channel[3] = (uint32_t) (dist4 > 40.0) ? 40 : ((dist4 < 4.0) ? 4 : dist4);
 }
 
 void anlg_ReadBatteryStatus(anlg_BatteryStatusType* status)

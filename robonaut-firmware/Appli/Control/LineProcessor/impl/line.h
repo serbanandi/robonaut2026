@@ -3,6 +3,11 @@
 
 #include "../line_interface.h"
 
+// --- TUNING PARAMETERS ---
+#define TRACKING_WINDOW 4.0f // +/- sensors to look for the line
+#define MIN_CHUNK_WIDTH 2    // Minimum sensors to count as a line
+#define MAX_CHUNKS 8         // Allow 4 lines + noise
+
 typedef struct
 {
     uint16_t adcThreshold;
@@ -11,14 +16,10 @@ typedef struct
 
 typedef enum
 {
-    LINE_STATE_NO_LINE = 0,
-    LINE_STATE_SINGLE_LINE,
-    LINE_STATE_POTENTIAL_QUAD_LINE,
-    LINE_STATE_QUAD_LINE,
-    LINE_STATE_SINGLE_LINE_AFTER_QUAD,
-    LINE_STATE_WAIT_FOR_LINE_SPLIT_START,
-    LINE_STATE_WAIT_FOR_LINE_SPLIT_STABILIZATION,
-    LINE_STATE_HANDLE_LINE_SPLIT
+    LINE_STATE_NO_LINE = 0,       // Logic: No line detected. Stop motors.
+    LINE_STATE_FOLLOW_LINE,       // Logic: Standard PID, follow the line closest to 'lastKnownPosition'.
+    LINE_STATE_JUNCTION_DETECTED, // Logic: Junction detected, prepare for split, query strategy for next move.
+    LINE_STATE_SPLIT_MANEUVER     // Logic: Execute the split maneuver as per strategy instruction.
 } line_InternalStateType;
 
 typedef struct
