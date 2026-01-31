@@ -49,9 +49,16 @@ set(CMAKE_CXX_COMPILER_FORCED "true")
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    USE_HAL_DRIVER
-    STM32N657xx
-    USE_NUCLEO_64
+    LL_ATON_PLATFORM=LL_ATON_PLAT_STM32N6
+    LL_ATON_OSAL=LL_ATON_OSAL_BARE_METAL
+    LL_ATON_RT_MODE=LL_ATON_RT_ASYNC
+    LL_ATON_SW_FALLBACK=1
+    LL_ATON_DBG_BUFFER_INFO_EXCLUDED=1
+    UX_STANDALONE
+    UVC_LIB_USE_USBX
+    SCR_LIB_USE_UVCL
+    USBL_PACKET_PER_MICRO_FRAME=3
+    UX_INCLUDE_USER_DEFINE_FILE
 )
 
 # Enable CMake support for ASM and C languages
@@ -98,6 +105,11 @@ set(HW_DRIVER_SOURCES
 
 set(ROBONAUT_UTIL_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RobonAUT/SimpleLogger/SimpleLogger.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/RobonAUT/Camera/Camera.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/RobonAUT/Display/Display.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/RobonAUT/NeuralNetwork/NeuralNetwork.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/RobonAUT/NeuralNetwork/network.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/RobonAUT/NeuralNetwork/app_postprocess_od_yolov8_uf.c
 )
 
 # Add sources to executable

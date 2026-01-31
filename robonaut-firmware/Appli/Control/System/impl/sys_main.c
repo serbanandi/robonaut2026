@@ -7,10 +7,13 @@
 #include "MicroTimer/mt_interface.h"
 
 #include "AnalogInputs/anlg_interface.h"
+#include "Camera/Camera.h"
+#include "Display/Display.h"
 #include "Drive/drv_interface.h"
 #include "HwTest/test_interface.h"
 #include "LineController/lc_interface.h"
 #include "LineProcessor/line_interface.h"
+#include "NeuralNetwork/NeuralNetwork.h"
 #include "RadioControl/rc_interface.h"
 #include "SSD1306/ssd1306_fonts.h"
 #include "SSD1306/ssd1306_interface.h"
@@ -148,6 +151,7 @@ void sys_Run(void)
         rc_Process();
         ui_Process();
         ls_Process();
+        CAM_Process();
 
         test_ProcessAll();
 

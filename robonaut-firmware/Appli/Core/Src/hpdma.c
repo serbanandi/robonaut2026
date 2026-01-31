@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    hpdma.c
-  * @brief   This file provides code for the configuration
-  *          of the HPDMA instances.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    hpdma.c
+ * @brief   This file provides code for the configuration
+ *          of the HPDMA instances.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2026 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "hpdma.h"
@@ -31,6 +31,12 @@ void MX_HPDMA1_Init(void)
 {
 
   /* USER CODE BEGIN HPDMA1_Init 0 */
+
+    __HAL_RCC_HPDMA1_CLK_ENABLE();
+
+    /* HPDMA1 interrupt Init */
+    HAL_NVIC_SetPriority(HPDMA1_Channel15_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(HPDMA1_Channel15_IRQn);
 
   /* USER CODE END HPDMA1_Init 0 */
 

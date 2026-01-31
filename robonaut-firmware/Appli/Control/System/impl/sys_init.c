@@ -4,11 +4,10 @@
 #include "spi.h"
 #include "tim.h"
 
-// #include "npu_cache.h"
-// #include "NeuralNetwork/NeuralNetwork.h"
-
 #include "AnalogInputs/anlg_interface.h"
+#include "Camera/Camera.h"
 #include "ControllerTuning/tuning_interface.h"
+#include "Display/Display.h"
 #include "Drive/drv_interface.h"
 #include "HwTest/test_interface.h"
 #include "IMU/imu_interface.h"
@@ -16,6 +15,7 @@
 #include "LineProcessor/line_interface.h"
 #include "LineSensor/ls_interface.h"
 #include "MicroTimer/mt_interface.h"
+#include "NeuralNetwork/NeuralNetwork.h"
 #include "RadioControl/rc_interface.h"
 #include "SSD1306/ssd1306_fonts.h"
 #include "SSD1306/ssd1306_interface.h"
@@ -38,9 +38,6 @@ static float telVar_encoderSpeed = 0.0f;
 
 void sys_Init(void)
 {
-    // npu_cache_enable();
-    // NN_Init();
-
     mt_Init();
     tel_Init();
     ls_Init();
@@ -56,7 +53,16 @@ void sys_Init(void)
 
     test_Init();
 
+    if (!NN_Init())
+        Error_Handler();
+    if (!CAM_Init())
+        Error_Handler();
+    if (!DS_Init())
+        Error_Handler();
+
     _sys_RegisterTelemetryVariables();
+
+    CAM_Start();
 
     HAL_Delay(500); // Wait for everything to stabilize
     ssd1306_Fill(0);

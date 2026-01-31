@@ -24,7 +24,6 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/adc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/cacheaxi.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/dcmipp.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/dma2d.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/gpdma.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/hpdma.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/i2c.c
@@ -32,7 +31,6 @@ set(MX_Application_Src
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/spi.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/tim.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/usart.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/usb_otg.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/stm32n6xx_it.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/stm32n6xx_hal_msp.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/secure_nsc.c

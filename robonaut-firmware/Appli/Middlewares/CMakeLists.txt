@@ -22,7 +22,13 @@ add_compile_definitions(${PROJECT_NAME} PUBLIC
     UX_INCLUDE_USER_DEFINE_FILE
 )
 
-target_link_libraries(${PROJECT_NAME}
+add_library(NetworkRuntime1010_CM55_GCC STATIC IMPORTED)
+set_target_properties(NetworkRuntime1010_CM55_GCC PROPERTIES
+    IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/AI_Runtime/Lib/GCC/ARMCortexM55/NetworkRuntime1010_CM55_GCC.a"
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    NetworkRuntime1010_CM55_GCC
     STM32_Drivers
 )
 
@@ -79,8 +85,6 @@ target_sources(${PROJECT_NAME} PRIVATE
     ${FONT_SOURCES}
     ${LIB_VISION_MODEL_SOURCES}
 )
-
-
 
 
 

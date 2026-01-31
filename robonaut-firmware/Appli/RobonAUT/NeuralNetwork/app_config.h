@@ -30,12 +30,12 @@
 #define NN_BPP 3
 
 /* Classes */
-#define NB_CLASSES   (1)
+#define NB_CLASSES   (4)
 #define CLASSES_TABLE const char* classes_table[NB_CLASSES] = {\
-   "person"}\
+   "car" ,   "green" ,   "logo" ,   "red"}\
 
 /* Postprocessing YOLO_V8/V5u output float configuration */
-#define AI_OD_YOLOV8_PP_NB_CLASSES        (1)
+#define AI_OD_YOLOV8_PP_NB_CLASSES        (4)
 #define AI_OD_YOLOV8_PP_TOTAL_BOXES       (1344)
 #define AI_OD_YOLOV8_PP_MAX_BOXES_LIMIT   (10)
 #define AI_OD_YOLOV8_PP_CONF_THRESHOLD    (0.6)
